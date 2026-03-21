@@ -4,20 +4,22 @@ import { ArrowDown } from "lucide-react";
 const Hero = () => {
   return (
     <section className="relative min-h-screen flex flex-col justify-center px-6 md:px-16 lg:px-24 overflow-hidden">
-      {/* Background accent */}
-      <div className="absolute top-0 right-0 w-1/2 h-full bg-secondary/50 -z-10 hidden lg:block" />
-      <div className="absolute top-20 right-20 w-72 h-72 rounded-full bg-primary/10 blur-3xl -z-10" />
-      <div className="absolute bottom-20 left-10 w-48 h-48 rounded-full bg-accent/15 blur-2xl -z-10" />
+      {/* Ambient glow orbs */}
+      <div className="absolute top-1/4 right-1/4 w-96 h-96 rounded-full bg-primary/8 blur-[120px] -z-10" />
+      <div className="absolute bottom-1/4 left-1/6 w-72 h-72 rounded-full bg-accent/10 blur-[100px] -z-10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-primary/5 blur-[150px] -z-10" />
 
       <div className="max-w-6xl mx-auto w-full">
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          className="text-muted-foreground text-sm md:text-base tracking-widest uppercase mb-6"
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5 }}
+          className="glass-subtle inline-block px-4 py-2 rounded-full mb-8"
         >
-          Developer · Designer · Chef · Freelancer
-        </motion.p>
+          <p className="text-muted-foreground text-sm tracking-widest uppercase">
+            Developer · Designer · Chef · Freelancer
+          </p>
+        </motion.div>
 
         <motion.h1
           initial={{ opacity: 0, y: 40 }}

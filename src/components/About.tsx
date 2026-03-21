@@ -2,7 +2,8 @@ import { motion } from "framer-motion";
 
 const About = () => {
   return (
-    <section id="about" className="py-24 md:py-32 px-6 md:px-16 lg:px-24 bg-card">
+    <section id="about" className="py-24 md:py-32 px-6 md:px-16 lg:px-24 relative">
+      <div className="absolute inset-0 bg-secondary/30 -z-10" />
       <div className="max-w-6xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
           <motion.div
@@ -35,26 +36,24 @@ const About = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.7, delay: 0.2 }}
-            className="relative"
+            className="grid grid-cols-2 gap-4"
           >
-            <div className="grid grid-cols-2 gap-4">
-              {[
-                { number: "8+", label: "Years Experience" },
-                { number: "120+", label: "Projects Delivered" },
-                { number: "50+", label: "Happy Clients" },
-                { number: "5", label: "Creative Disciplines" },
-              ].map((stat) => (
-                <div
-                  key={stat.label}
-                  className="p-6 rounded-2xl bg-background border border-border text-center"
-                >
-                  <p className="text-3xl md:text-4xl font-display font-bold text-primary mb-1">
-                    {stat.number}
-                  </p>
-                  <p className="text-muted-foreground text-sm">{stat.label}</p>
-                </div>
-              ))}
-            </div>
+            {[
+              { number: "8+", label: "Years Experience" },
+              { number: "120+", label: "Projects Delivered" },
+              { number: "50+", label: "Happy Clients" },
+              { number: "5", label: "Creative Disciplines" },
+            ].map((stat) => (
+              <div
+                key={stat.label}
+                className="glass-card p-6 rounded-2xl text-center"
+              >
+                <p className="text-3xl md:text-4xl font-display font-bold text-gradient mb-1">
+                  {stat.number}
+                </p>
+                <p className="text-muted-foreground text-sm">{stat.label}</p>
+              </div>
+            ))}
           </motion.div>
         </div>
       </div>
