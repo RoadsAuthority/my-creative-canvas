@@ -24,7 +24,7 @@ const Contact = () => {
 
           <a
             href="mailto:hello@example.com"
-            className="inline-flex items-center gap-3 px-8 py-4 bg-primary text-primary-foreground rounded-full text-lg font-display font-semibold hover:opacity-90 transition-opacity group"
+            className="inline-flex items-center gap-3 px-8 py-4 glass rounded-full text-lg font-display font-semibold text-primary hover:glow-primary transition-all duration-300 group"
           >
             <Mail className="w-5 h-5" />
             Say Hello

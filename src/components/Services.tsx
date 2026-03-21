@@ -31,9 +31,7 @@ const services = [
 
 const container = {
   hidden: {},
-  show: {
-    transition: { staggerChildren: 0.1 },
-  },
+  show: { transition: { staggerChildren: 0.1 } },
 };
 
 const item = {
@@ -54,7 +52,7 @@ const Services = () => {
         >
           <p className="text-primary text-sm tracking-widest uppercase mb-3">What I Do</p>
           <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
-            Services & Skills
+            Services & <span className="text-gradient">Skills</span>
           </h2>
         </motion.div>
 
@@ -69,9 +67,9 @@ const Services = () => {
             <motion.div
               key={service.title}
               variants={item}
-              className="group p-8 rounded-2xl bg-card border border-border hover:border-primary/30 transition-all duration-300 hover:shadow-lg hover:shadow-primary/5"
+              className="group glass-card p-8 rounded-2xl hover:glow-primary transition-all duration-500"
             >
-              <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mb-6 group-hover:bg-primary/20 transition-colors">
+              <div className="w-12 h-12 rounded-xl glass flex items-center justify-center mb-6 group-hover:glow-primary transition-all duration-300">
                 <service.icon className="w-6 h-6 text-primary" />
               </div>
               <h3 className="text-xl font-display font-semibold mb-3">{service.title}</h3>
