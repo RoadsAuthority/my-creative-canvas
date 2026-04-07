@@ -61,10 +61,10 @@ const Projects = () => {
     <section id="projects" className="py-24 md:py-32 px-6 md:px-16 lg:px-24">
       <div className="max-w-6xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="mb-16"
         >
           <p className="text-primary text-sm tracking-widest uppercase mb-3">Selected Work</p>
@@ -77,31 +77,39 @@ const Projects = () => {
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {projects.map((project) => (
             <motion.div
               key={project.title}
               variants={item}
-              className="group glass-card rounded-2xl overflow-hidden hover:glow-primary transition-all duration-500"
+              whileHover={{ y: -8 }}
+              transition={{ type: "spring", stiffness: 280, damping: 24 }}
+              className="group glass-card overflow-hidden rounded-[1.35rem] transition-shadow duration-500 hover:glow-primary"
             >
               <div className="relative overflow-hidden">
-                <img
+                <motion.img
                   src={project.image}
                   alt={project.title}
-                  className="w-full h-48 object-cover transition-transform duration-700 group-hover:scale-110"
+                  className="h-48 w-full object-cover"
+                  whileHover={{ scale: 1.08 }}
+                  transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end justify-end p-4">
-                  <div className="w-10 h-10 rounded-full glass flex items-center justify-center">
-                    <ExternalLink className="w-4 h-4 text-primary" />
-                  </div>
+                <div className="absolute inset-0 flex items-end justify-end bg-gradient-to-t from-background/90 via-background/10 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <motion.div
+                    className="glass-frosted flex h-11 w-11 items-center justify-center rounded-full"
+                    whileHover={{ scale: 1.12, rotate: 12 }}
+                    whileTap={{ scale: 0.92 }}
+                  >
+                    <ExternalLink className="h-4 w-4 text-primary" />
+                  </motion.div>
                 </div>
               </div>
               <div className="p-6">
-                <p className="text-primary text-xs tracking-widest uppercase mb-2">{project.category}</p>
-                <h3 className="text-lg font-display font-semibold mb-2">{project.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed">{project.description}</p>
+                <p className="mb-2 text-xs uppercase tracking-widest text-primary">{project.category}</p>
+                <h3 className="mb-2 font-display text-lg font-semibold">{project.title}</h3>
+                <p className="text-sm leading-relaxed text-muted-foreground">{project.description}</p>
               </div>
             </motion.div>
           ))}

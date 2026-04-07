@@ -1,0 +1,121 @@
+import { PortfolioData } from "@/types/portfolio";
+
+export interface PortfolioRecord extends PortfolioData {
+  /** Present for your own listings and local storage; omitted on public API slug GET */
+  user_id?: string;
+}
+
+const LOCAL_KEY = "portfolio-builder-items";
+const API_BASE = import.meta.env.VITE_API_BASE_URL?.trim();
+
+const apiFetch = (path: string, init?: RequestInit) =>
+  fetch(`${API_BASE}${path}`, { ...init, credentials: "include" });
+const DEMO_PORTFOLIO: PortfolioRecord = {
+  id: "demo",
+  user_id: "demo-user",
+  slug: "demo",
+  fullName: "Alex Carter",
+  profileImageUrl: "",
+  headline: "Product Designer & Frontend Developer",
+  bio: "I build conversion-focused digital products for startups and agencies.",
+  email: "alex@example.com",
+  location: "Remote",
+  theme: "glass",
+  customDomain: "alex.design",
+  customDomainVerified: true,
+  socialLinks: {
+    website: "https://example.com",
+    linkedin: "https://linkedin.com/in/example",
+    github: "https://github.com/example",
+  },
+  projects: [
+    {
+      id: "p1",
+      title: "Finance Dashboard",
+      role: "Lead Product Designer",
+      summary: "Redesigned onboarding and dashboard workflows, improving activation by 28%.",
+      link: "https://example.com",
+      tags: "Figma, UX, React",
+      imageUrl: "",
+    },
+  ],
+  createdAt: new Date().toISOString(),
+};
+
+const loadLocal = (): PortfolioRecord[] => {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    return raw ? (JSON.parse(raw) as PortfolioRecord[]) : [];
+  } catch {
+    return [];
+  }
+};
+
+const saveLocal = (items: PortfolioRecord[]) => {
+  localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
+};
+
+export const listPortfoliosByUser = async (userId: string): Promise<PortfolioRecord[]> => {
+  if (!API_BASE) {
+    return loadLocal().filter((p) => p.user_id === userId);
+  }
+
+  const res = await apiFetch(`/portfolios?userId=${encodeURIComponent(userId)}`);
+  if (!res.ok) throw new Error("Failed to load portfolios");
+  return (await res.json()) as PortfolioRecord[];
+};
+
+export const getPortfolioBySlug = async (slug: string): Promise<PortfolioRecord | null> => {
+  if (slug === "demo") return { ...DEMO_PORTFOLIO, showPoweredBy: true };
+  if (!API_BASE) {
+    return loadLocal().find((p) => p.slug === slug) ?? null;
+  }
+
+  const res = await apiFetch(`/portfolios/${encodeURIComponent(slug)}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to load portfolio");
+  return (await res.json()) as PortfolioRecord;
+};
+
+export const upsertPortfolio = async (item: PortfolioRecord): Promise<void> => {
+  if (!API_BASE) {
+    const items = loadLocal();
+    const index = items.findIndex((p) => p.slug === item.slug);
+    if (index >= 0) items[index] = item;
+    else items.unshift(item);
+    saveLocal(items);
+    return;
+  }
+
+  const res = await apiFetch(`/portfolios/upsert`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(item),
+  });
+  if (res.status === 402) {
+    const errBody = await res.json().catch(() => ({}));
+    const msg = typeof errBody?.message === "string" ? errBody.message : "Upgrade required to publish.";
+    const e = new Error(msg) as Error & { code?: string; status?: number };
+    e.code = typeof errBody?.code === "string" ? errBody.code : "BILLING";
+    e.status = 402;
+    throw e;
+  }
+  if (!res.ok) throw new Error("Failed to save portfolio");
+};
+
+export const deletePortfolio = async (id: string): Promise<void> => {
+  if (!API_BASE) {
+    const items = loadLocal().filter((p) => p.id !== id);
+    saveLocal(items);
+    return;
+  }
+
+  const res = await apiFetch(`/portfolios/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    const msg = typeof body?.message === "string" ? body.message : "Failed to delete portfolio";
+    throw new Error(msg);
+  }
+};

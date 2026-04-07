@@ -1,26 +1,69 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import Auth from "./pages/Auth.tsx";
+import Landing from "./pages/Landing.tsx";
+import Builder from "./pages/Builder.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Portfolio from "./pages/Portfolio.tsx";
+import Billing from "./pages/Billing.tsx";
 
 const queryClient = new QueryClient();
 
+const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
+
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-6">
+        <div className="h-10 w-10 animate-pulse rounded-full border-2 border-primary/30 border-t-primary" />
+        <p className="text-sm text-muted-foreground">Loading your workspace…</p>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Landing />} />
+      <Route path="/auth" element={<Auth />} />
+      <Route
+        path="/app"
+        element={
+          hasApi && !user ? (
+            <Navigate to="/auth" replace />
+          ) : (
+            <Builder userId={user?.id ?? "local-user"} />
+          )
+        }
+      />
+      <Route path="/portfolio/:slug" element={<Portfolio />} />
+      <Route path="/billing" element={<Billing />} />
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner position="top-center" richColors />
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 

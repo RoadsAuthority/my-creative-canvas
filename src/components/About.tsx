@@ -2,15 +2,16 @@ import { motion } from "framer-motion";
 
 const About = () => {
   return (
-    <section id="about" className="py-24 md:py-32 px-6 md:px-16 lg:px-24 relative">
-      <div className="absolute inset-0 bg-secondary/30 -z-10" />
-      <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+    <section id="about" className="relative px-6 py-24 md:px-16 md:py-32 lg:px-24">
+      <div className="absolute inset-0 -z-10 bg-secondary/25 backdrop-blur-[2px]" />
+      <div className="mx-auto max-w-6xl">
+        <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <motion.div
-            initial={{ opacity: 0, x: -30 }}
+            initial={{ opacity: 0, x: -36 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
+            className="glass-frosted rounded-[1.75rem] p-8 md:p-10"
           >
             <p className="text-primary text-sm tracking-widest uppercase mb-3">About Me</p>
             <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-8">
@@ -32,10 +33,10 @@ const About = () => {
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, x: 30 }}
+            initial={{ opacity: 0, x: 36 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.7, delay: 0.2 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
             className="grid grid-cols-2 gap-4"
           >
             {[
@@ -43,16 +44,21 @@ const About = () => {
               { number: "120+", label: "Projects Delivered" },
               { number: "50+", label: "Happy Clients" },
               { number: "5", label: "Creative Disciplines" },
-            ].map((stat) => (
-              <div
+            ].map((stat, i) => (
+              <motion.div
                 key={stat.label}
-                className="glass-card p-6 rounded-2xl text-center"
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.08 * i, duration: 0.45 }}
+                whileHover={{ y: -6, scale: 1.02 }}
+                className="glass-card rounded-2xl p-6 text-center transition-shadow duration-300 hover:glow-primary"
               >
-                <p className="text-3xl md:text-4xl font-display font-bold text-gradient mb-1">
+                <p className="mb-1 font-display text-3xl font-bold text-gradient md:text-4xl">
                   {stat.number}
                 </p>
-                <p className="text-muted-foreground text-sm">{stat.label}</p>
-              </div>
+                <p className="text-sm text-muted-foreground">{stat.label}</p>
+              </motion.div>
             ))}
           </motion.div>
         </div>

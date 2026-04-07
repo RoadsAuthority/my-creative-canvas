@@ -35,8 +35,12 @@ const container = {
 };
 
 const item = {
-  hidden: { opacity: 0, y: 30 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
+  hidden: { opacity: 0, y: 36 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] },
+  },
 };
 
 const Services = () => {
@@ -44,14 +48,14 @@ const Services = () => {
     <section id="services" className="py-24 md:py-32 px-6 md:px-16 lg:px-24">
       <div className="max-w-6xl mx-auto">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6 }}
+          viewport={{ once: true, margin: "-80px" }}
+          transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           className="mb-16"
         >
-          <p className="text-primary text-sm tracking-widest uppercase mb-3">What I Do</p>
-          <h2 className="text-4xl md:text-5xl font-bold tracking-tight">
+          <p className="mb-3 text-sm uppercase tracking-widest text-primary">What I Do</p>
+          <h2 className="text-4xl font-bold tracking-tight md:text-5xl">
             Services & <span className="text-gradient">Skills</span>
           </h2>
         </motion.div>
@@ -60,20 +64,26 @@ const Services = () => {
           variants={container}
           initial="hidden"
           whileInView="show"
-          viewport={{ once: true }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          viewport={{ once: true, margin: "-40px" }}
+          className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
           {services.map((service) => (
             <motion.div
               key={service.title}
               variants={item}
-              className="group glass-card p-8 rounded-2xl hover:glow-primary transition-all duration-500"
+              whileHover={{ y: -10, scale: 1.02 }}
+              transition={{ type: "spring", stiffness: 320, damping: 22 }}
+              className="group glass-card rounded-[1.35rem] p-8 transition-shadow duration-500 hover:glow-primary"
             >
-              <div className="w-12 h-12 rounded-xl glass flex items-center justify-center mb-6 group-hover:glow-primary transition-all duration-300">
-                <service.icon className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="text-xl font-display font-semibold mb-3">{service.title}</h3>
-              <p className="text-muted-foreground leading-relaxed">{service.description}</p>
+              <motion.div
+                className="glass-frosted mb-6 flex h-14 w-14 items-center justify-center rounded-2xl"
+                whileHover={{ rotate: [0, -6, 6, 0], scale: 1.08 }}
+                transition={{ duration: 0.45 }}
+              >
+                <service.icon className="h-7 w-7 text-primary" />
+              </motion.div>
+              <h3 className="mb-3 font-display text-xl font-semibold">{service.title}</h3>
+              <p className="leading-relaxed text-muted-foreground">{service.description}</p>
             </motion.div>
           ))}
         </motion.div>

@@ -1,23 +1,32 @@
+import { motion } from "framer-motion";
+
 const Footer = () => {
   return (
-    <footer className="py-8 px-6 md:px-16 lg:px-24 border-t border-border">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-        <p className="text-muted-foreground text-sm">
+    <motion.footer
+      initial={{ opacity: 0 }}
+      whileInView={{ opacity: 1 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="glass-subtle border-t border-white/10 px-6 py-10 md:px-16 lg:px-24"
+    >
+      <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 md:flex-row">
+        <p className="text-sm text-muted-foreground">
           © {new Date().getFullYear()} Portfolio. All rights reserved.
         </p>
-        <div className="flex items-center gap-6">
+        <div className="flex flex-wrap items-center justify-center gap-6">
           {["GitHub", "LinkedIn", "Dribbble", "Twitter"].map((social) => (
-            <a
+            <motion.a
               key={social}
               href="#"
-              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+              className="text-sm text-muted-foreground transition-colors hover:text-primary"
+              whileHover={{ y: -2 }}
             >
               {social}
-            </a>
+            </motion.a>
           ))}
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 };
 
