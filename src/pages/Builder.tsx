@@ -555,7 +555,7 @@ const Builder = ({ userId }: BuilderProps) => {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {billing && !billing.limits.customDomain
                       ? "Custom domain is a Premium feature — upgrade on the Plans page."
-                      : "Add your domain/subdomain. Save first, then verify DNS with the TXT token below."}
+                      : "Simple setup: save, add 2 DNS records, then click Verify."}
                   </p>
                   {billing?.limits.customDomain && customDomain ? (
                     <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs text-muted-foreground">
@@ -567,9 +567,55 @@ const Builder = ({ userId }: BuilderProps) => {
                       </p>
                       {customDomainVerifyToken ? (
                         <>
-                          <p className="mt-2">Create TXT record:</p>
-                          <p className="font-mono text-foreground">Host: _pf-verify.{customDomain}</p>
-                          <p className="font-mono text-foreground">Value: {customDomainVerifyToken}</p>
+                          <p className="mt-2">Step 1: Point your domain to PortfolioForge</p>
+                          <div className="mt-1 rounded-lg border border-white/10 p-2">
+                            <p>CNAME (or ALIAS) target:</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <span className="font-mono text-foreground">cname.vercel-dns.com</span>
+                              <button
+                                type="button"
+                                className="text-primary underline"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText("cname.vercel-dns.com");
+                                  toast.success("CNAME target copied");
+                                }}
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          </div>
+
+                          <p className="mt-3">Step 2: Add TXT verification record</p>
+                          <div className="mt-1 rounded-lg border border-white/10 p-2">
+                            <p>Host</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <span className="font-mono text-foreground">_pf-verify.{customDomain}</span>
+                              <button
+                                type="button"
+                                className="text-primary underline"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText(`_pf-verify.${customDomain}`);
+                                  toast.success("TXT host copied");
+                                }}
+                              >
+                                Copy
+                              </button>
+                            </div>
+                            <p className="mt-2">Value</p>
+                            <div className="mt-1 flex flex-wrap items-center gap-2">
+                              <span className="font-mono text-foreground">{customDomainVerifyToken}</span>
+                              <button
+                                type="button"
+                                className="text-primary underline"
+                                onClick={() => {
+                                  void navigator.clipboard.writeText(customDomainVerifyToken);
+                                  toast.success("TXT value copied");
+                                }}
+                              >
+                                Copy
+                              </button>
+                            </div>
+                          </div>
                         </>
                       ) : (
                         <p className="mt-2">Save this portfolio first to generate your DNS verification token.</p>
