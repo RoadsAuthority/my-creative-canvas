@@ -112,7 +112,11 @@ export const upsertPortfolio = async (item: PortfolioRecord): Promise<void> => {
     e.status = 402;
     throw e;
   }
-  if (!res.ok) throw new Error("Failed to save portfolio");
+  if (!res.ok) {
+    const errBody = await res.json().catch(() => ({}));
+    const message = typeof errBody?.message === "string" ? errBody.message : "Failed to save portfolio";
+    throw new Error(message);
+  }
 };
 
 export const deletePortfolio = async (id: string): Promise<void> => {
