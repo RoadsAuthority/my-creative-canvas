@@ -49,6 +49,8 @@ const Builder = ({ userId }: BuilderProps) => {
 
   const [fullName, setFullName] = useState("");
   const [profileImageUrl, setProfileImageUrl] = useState("");
+  const [cvUrl, setCvUrl] = useState("");
+  const [cvFileName, setCvFileName] = useState("");
   const [headline, setHeadline] = useState("");
   const [bio, setBio] = useState("");
   const [email, setEmail] = useState("");
@@ -120,6 +122,8 @@ const Builder = ({ userId }: BuilderProps) => {
     slugDirtyRef.current = false;
     setFullName("");
     setProfileImageUrl("");
+    setCvUrl("");
+    setCvFileName("");
     setHeadline("");
     setBio("");
     setEmail("");
@@ -136,6 +140,8 @@ const Builder = ({ userId }: BuilderProps) => {
     slugDirtyRef.current = true;
     setFullName(p.fullName);
     setProfileImageUrl(p.profileImageUrl ?? "");
+    setCvUrl(p.cvUrl ?? "");
+    setCvFileName(p.cvFileName ?? "");
     setHeadline(p.headline);
     setBio(p.bio);
     setEmail(p.email);
@@ -167,6 +173,17 @@ const Builder = ({ userId }: BuilderProps) => {
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
       setProfileImageUrl(result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadCv = (file?: File) => {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : "";
+      setCvUrl(result);
+      setCvFileName(file.name || "cv");
     };
     reader.readAsDataURL(file);
   };
@@ -226,6 +243,8 @@ const Builder = ({ userId }: BuilderProps) => {
       slug: cleanSlug,
       fullName: fullName.trim(),
       profileImageUrl: profileImageUrl.trim(),
+      cvUrl: cvUrl.trim(),
+      cvFileName: cvFileName.trim(),
       headline: headline.trim(),
       bio: bio.trim(),
       email: email.trim(),
@@ -409,6 +428,37 @@ const Builder = ({ userId }: BuilderProps) => {
                       >
                         <X className="h-3.5 w-3.5" />
                         Remove photo
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="md:col-span-2">
+                  <label className="mb-1.5 block text-xs text-muted-foreground">CV upload (optional)</label>
+                  <input
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(e) => uploadCv(e.target.files?.[0])}
+                    className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
+                  />
+                  {cvUrl ? (
+                    <div className="mt-3 flex items-center gap-3">
+                      <a
+                        href={cvUrl}
+                        download={cvFileName || "cv"}
+                        className="text-xs text-primary underline"
+                      >
+                        {cvFileName || "Download CV"}
+                      </a>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setCvUrl("");
+                          setCvFileName("");
+                        }}
+                        className="glass-subtle inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        Remove CV
                       </button>
                     </div>
                   ) : null}

@@ -56,6 +56,15 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
 
           {user && hasApi ? (
             <Link
+              to="/analytics"
+              className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
+            >
+              Analytics
+            </Link>
+          ) : null}
+
+          {user && hasApi ? (
+            <Link
               to="/billing"
               className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground"
             >

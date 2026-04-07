@@ -152,6 +152,14 @@ async function ensureBillingSchema(): Promise<void> {
     ALTER TABLE portfolios
     ADD COLUMN IF NOT EXISTS profile_image_url text NOT NULL DEFAULT ''
   `);
+  await pool.query(`
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS cv_url text NOT NULL DEFAULT ''
+  `);
+  await pool.query(`
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS cv_file_name text NOT NULL DEFAULT ''
+  `);
 }
 
 type JwtPayload = { userId: string; email: string };
@@ -192,6 +200,8 @@ type DbPortfolio = {
   slug: string;
   full_name: string;
   profile_image_url: string;
+  cv_url: string;
+  cv_file_name: string;
   headline: string;
   bio: string;
   email: string;
@@ -215,6 +225,8 @@ function rowToClient(row: DbPortfolio) {
     slug: row.slug,
     fullName: row.full_name,
     profileImageUrl: row.profile_image_url ?? "",
+    cvUrl: row.cv_url ?? "",
+    cvFileName: row.cv_file_name ?? "",
     headline: row.headline,
     bio: row.bio,
     email: row.email,
@@ -440,6 +452,8 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
     slug?: string;
     fullName?: string;
     profileImageUrl?: string;
+    cvUrl?: string;
+    cvFileName?: string;
     headline?: string;
     bio?: string;
     email?: string;
@@ -501,15 +515,17 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
   if (existing.rows[0]) {
     await pool.query(
       `UPDATE portfolios SET
-        full_name = $2, profile_image_url = $3, headline = $4, bio = $5, email = $6, location = $7,
-        theme = $8, custom_domain = $9, custom_domain_verified = $10,
-        social_links = $11::jsonb, projects = $12::jsonb,
+        full_name = $2, profile_image_url = $3, cv_url = $4, cv_file_name = $5, headline = $6, bio = $7, email = $8, location = $9,
+        theme = $10, custom_domain = $11, custom_domain_verified = $12,
+        social_links = $13::jsonb, projects = $14::jsonb,
         updated_at = now()
-      WHERE slug = $1 AND user_id = $13`,
+      WHERE slug = $1 AND user_id = $15`,
       [
         body.slug,
         body.fullName,
         body.profileImageUrl ?? "",
+        body.cvUrl ?? "",
+        body.cvFileName ?? "",
         body.headline,
         body.bio ?? "",
         body.email ?? "",
@@ -525,15 +541,17 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
   } else {
     await pool.query(
       `INSERT INTO portfolios (
-        id, user_id, slug, full_name, profile_image_url, headline, bio, email, location, theme,
+        id, user_id, slug, full_name, profile_image_url, cv_url, cv_file_name, headline, bio, email, location, theme,
         custom_domain, custom_domain_verified, social_links, projects
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13::jsonb, $14::jsonb)`,
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb)`,
       [
         id,
         userId,
         body.slug,
         body.fullName,
         body.profileImageUrl ?? "",
+        body.cvUrl ?? "",
+        body.cvFileName ?? "",
         body.headline,
         body.bio ?? "",
         body.email ?? "",

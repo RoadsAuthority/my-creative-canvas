@@ -16,6 +16,8 @@ const DEMO_PORTFOLIO: PortfolioRecord = {
   slug: "demo",
   fullName: "Alex Carter",
   profileImageUrl: "",
+  cvUrl: "",
+  cvFileName: "",
   headline: "Product Designer & Frontend Developer",
   bio: "I build conversion-focused digital products for startups and agencies.",
   email: "alex@example.com",

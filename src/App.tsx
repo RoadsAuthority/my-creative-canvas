@@ -10,6 +10,7 @@ import Builder from "./pages/Builder.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import Billing from "./pages/Billing.tsx";
+import Analytics from "./pages/Analytics.tsx";
 
 const queryClient = new QueryClient();
 
@@ -43,6 +44,7 @@ function AppRoutes() {
       />
       <Route path="/portfolio/:slug" element={<Portfolio />} />
       <Route path="/billing" element={<Billing />} />
+      <Route path="/analytics" element={<Analytics />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

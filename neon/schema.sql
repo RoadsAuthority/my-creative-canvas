@@ -15,6 +15,8 @@ create table if not exists portfolios (
   slug text unique not null,
   full_name text not null,
   profile_image_url text not null default '',
+  cv_url text not null default '',
+  cv_file_name text not null default '',
   headline text not null,
   bio text not null default '',
   email text not null default '',

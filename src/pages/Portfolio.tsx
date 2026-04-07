@@ -243,6 +243,15 @@ const Portfolio = () => {
             ) : null}
 
             <div className="no-print mt-8 flex flex-wrap gap-3">
+              {data.cvUrl ? (
+                <a
+                  href={data.cvUrl}
+                  download={data.cvFileName || `${data.fullName}-CV`}
+                  className="glass-frosted rounded-full px-5 py-2.5 text-sm font-medium"
+                >
+                  Download CV
+                </a>
+              ) : null}
               <button
                 type="button"
                 onClick={() => window.print()}

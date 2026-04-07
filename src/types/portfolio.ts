@@ -22,6 +22,8 @@ export interface PortfolioData {
   slug: string;
   fullName: string;
   profileImageUrl?: string;
+  cvUrl?: string;
+  cvFileName?: string;
   headline: string;
   bio: string;
   email: string;
