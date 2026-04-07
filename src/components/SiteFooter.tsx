@@ -17,6 +17,15 @@ export function SiteFooter() {
           <Link to="/portfolio/demo" className="hover:text-primary">
             View sample
           </Link>
+          <Link to="/privacy" className="hover:text-primary">
+            Privacy
+          </Link>
+          <Link to="/terms" className="hover:text-primary">
+            Terms
+          </Link>
+          <Link to="/refunds" className="hover:text-primary">
+            Refunds
+          </Link>
         </div>
         <p className="mt-8 text-xs text-muted-foreground/80">© {new Date().getFullYear()} PortfolioForge</p>
       </div>

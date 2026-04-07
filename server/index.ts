@@ -376,7 +376,7 @@ app.get("/billing/status", authMiddleware, async (req, res) => {
       themes: tier === "free" ? ["glass"] : ["glass", "minimal", "bold"],
       customDomain: tier === "premium",
       analytics: tier === "basic" || tier === "premium",
-      showPoweredBy: tier === "free" || tier === "basic",
+      showPoweredBy: tier === "free",
     },
   });
 });

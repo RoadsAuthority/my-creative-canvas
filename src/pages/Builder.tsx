@@ -40,6 +40,13 @@ interface BuilderProps {
 const emptySocial = (): SocialLinks => ({ website: "", linkedin: "", github: "" });
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
+const MAX_CV_SIZE_MB = 2;
+const MAX_CV_SIZE_BYTES = MAX_CV_SIZE_MB * 1024 * 1024;
+const ALLOWED_CV_TYPES = [
+  "application/pdf",
+  "application/msword",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+];
 
 const Builder = ({ userId }: BuilderProps) => {
   const navigate = useNavigate();
@@ -179,6 +186,17 @@ const Builder = ({ userId }: BuilderProps) => {
 
   const uploadCv = (file?: File) => {
     if (!file) return;
+    const ext = file.name.toLowerCase();
+    const looksValidExt = ext.endsWith(".pdf") || ext.endsWith(".doc") || ext.endsWith(".docx");
+    const looksValidType = !file.type || ALLOWED_CV_TYPES.includes(file.type);
+    if (!looksValidExt && !looksValidType) {
+      toast.error("Only PDF, DOC, and DOCX files are allowed.");
+      return;
+    }
+    if (file.size > MAX_CV_SIZE_BYTES) {
+      toast.error(`CV is too large. Max size is ${MAX_CV_SIZE_MB}MB.`);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
@@ -440,6 +458,7 @@ const Builder = ({ userId }: BuilderProps) => {
                     onChange={(e) => uploadCv(e.target.files?.[0])}
                     className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">Accepted: PDF, DOC, DOCX (max {MAX_CV_SIZE_MB}MB).</p>
                   {cvUrl ? (
                     <div className="mt-3 flex items-center gap-3">
                       <a

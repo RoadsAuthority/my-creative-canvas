@@ -1,5 +1,5 @@
 /**
- * Public subscription profiles (NAD). Mirrors server defaults in server/billing.ts.
+ * Public plan profiles. Mirrors server defaults in server/billing.ts.
  * Landing uses this until /billing/plans loads (when API is connected).
  */
 export type PlanTierCopy = {
@@ -12,44 +12,47 @@ export type PlanTierCopy = {
   badge?: string;
 };
 
-export const PRICING_CURRENCY = "NAD";
+export const PRICING_CURRENCY = "USD";
 
 export const freeTierCopy: PlanTierCopy = {
   label: "Free",
-  priceHint: "N$0",
+  priceHint: "$0",
   tagline: "Try the editor and one public portfolio (freemium).",
   includes: [
     "1 live portfolio",
     "Glass theme only",
     "Public URL & print/PDF export",
     "Social links on your page",
+    "Path domain (pf.me/user style URL)",
   ],
   restrictions: ["No custom domain", "No dashboard analytics", "“Made with PortfolioForge” on your page"],
 };
 
 export const basicTierCopy: PlanTierCopy = {
-  label: "Basic portfolio",
-  priceHint: "N$50 – N$100",
-  tagline: "Full polish for students, job seekers, and first-time freelancers.",
+  label: "Basic ($19)",
+  priceHint: "$19 (once-off)",
+  tagline: "The last portfolio fee you'll ever pay for a professional profile.",
   includes: [
     "Up to 5 portfolios",
     "All themes (Glass, Minimal, Bold)",
-    "Dashboard analytics (views & project clicks)",
+    "Basic analytics (views & project clicks)",
     "Unlimited edits & republish",
+    "No “Made with” branding",
+    "One-time payment",
   ],
-  restrictions: ["“Made with PortfolioForge” on public pages", "No custom domain"],
+  restrictions: ["No custom domain"],
 };
 
 export const premiumTierCopy: PlanTierCopy = {
-  label: "Premium",
-  priceHint: "N$150 – N$300",
-  tagline: "Your brand on your domain — for serious freelancers and consultants.",
+  label: "Premium ($49)",
+  priceHint: "$49 (once-off)",
+  tagline: "One-time investment, lifetime professional presence on your own domain.",
   badge: "Best value",
   includes: ["Everything in Basic"],
   extras: [
     "Custom domain (DNS when you are ready)",
-    "Remove “Made with PortfolioForge”",
-    "Very high portfolio limit",
-    "Same analytics & all themes",
+    "Advanced analytics",
+    "Up to 50 portfolios",
+    "One-time payment",
   ],
 };

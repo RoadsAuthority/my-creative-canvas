@@ -75,7 +75,7 @@ const Landing = () => {
   const currencyNote =
     livePlans?.currency && livePlans.currency !== PRICING_CURRENCY
       ? `Display currency: ${livePlans.currency}. Card/PayPal charges may differ.`
-      : `Prices shown in Namibian dollars (${PRICING_CURRENCY}). Upgrade from your account after sign-in.`;
+      : `Prices shown in ${PRICING_CURRENCY}. Basic and Premium are once-off payments.`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -98,6 +98,9 @@ const Landing = () => {
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
                 Turn projects into a polished, public page: bio, case studies, social links, and a print-ready export for
                 recruiters. Built for freelancers, designers, and engineers who need credibility fast.
+              </p>
+              <p className="mt-4 max-w-xl text-sm text-primary/90">
+                The last portfolio fee you'll ever pay. One-time investment, lifetime professional presence.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
                 <Link
@@ -293,6 +296,22 @@ const Landing = () => {
         </section>
 
         <section className="px-5 py-20 md:px-10">
+          <div className="mx-auto mb-8 max-w-6xl rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5 text-sm text-muted-foreground">
+            <p className="font-medium text-foreground">Own your work</p>
+            <p className="mt-2">
+              Every portfolio supports print/PDF export today, so you always keep a portable version of your profile and
+              project stories.
+            </p>
+          </div>
+
+          <div className="mx-auto mb-10 max-w-6xl rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-6">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Planned features</p>
+            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+              <li>Static HTML export for full offline hosting</li>
+              <li>Visitor geolocation insights and traffic source breakdown</li>
+              <li>Portfolio templates marketplace and section presets</li>
+            </ul>
+          </div>
           <div className="mx-auto flex max-w-6xl flex-col items-center rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 px-8 py-16 text-center md:px-16">
             <h2 className="font-display text-3xl font-bold md:text-4xl">Ready when you are</h2>
             <p className="mt-4 max-w-lg text-muted-foreground">

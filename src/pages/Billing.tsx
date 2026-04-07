@@ -187,7 +187,7 @@ const Billing = () => {
                 <>
                   Online payments use PayPal. Amounts are charged in{" "}
                   <span className="font-mono">{plans?.paypalCurrency ?? "USD"}</span> — compare to your NAD price
-                  before paying.
+                  before paying. Basic and Premium are one-time purchases (not recurring subscriptions).
                 </>
               )}
               {provider === "stripe" && (

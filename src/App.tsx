@@ -11,6 +11,9 @@ import NotFound from "./pages/NotFound.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import Billing from "./pages/Billing.tsx";
 import Analytics from "./pages/Analytics.tsx";
+import Privacy from "./pages/Privacy.tsx";
+import Terms from "./pages/Terms.tsx";
+import Refunds from "./pages/Refunds.tsx";
 
 const queryClient = new QueryClient();
 
@@ -45,6 +48,9 @@ function AppRoutes() {
       <Route path="/portfolio/:slug" element={<Portfolio />} />
       <Route path="/billing" element={<Billing />} />
       <Route path="/analytics" element={<Analytics />} />
+      <Route path="/privacy" element={<Privacy />} />
+      <Route path="/terms" element={<Terms />} />
+      <Route path="/refunds" element={<Refunds />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );

@@ -20,7 +20,7 @@ export function getBillingMode(): "strict" | "freemium" {
 }
 
 export function maxPortfoliosForTier(tier: BillingTier): number {
-  if (tier === "premium") return 1000;
+  if (tier === "premium") return 50;
   if (tier === "basic") return 5;
   return 1;
 }
@@ -39,7 +39,7 @@ export function analyticsAllowedForTier(tier: BillingTier): boolean {
 }
 
 export function showPoweredByForTier(tier: BillingTier): boolean {
-  return tier === "free" || tier === "basic";
+  return tier === "free";
 }
 
 export async function getUserTier(pool: Pool, userId: string): Promise<BillingTier> {
@@ -257,34 +257,35 @@ export function billingPlansPayload() {
     checkoutAvailable: provider !== "manual" && (provider === "paypal" ? paypalConfigured() : stripeConfigured()),
     manualConfigured: provider === "manual" ? manualReady : true,
     basic: {
-      label: process.env.BILLING_LABEL_BASIC ?? "Basic portfolio",
-      priceHint: process.env.BILLING_PRICE_HINT_BASIC ?? "N$50 – N$100",
+      label: process.env.BILLING_LABEL_BASIC ?? "Basic ($19)",
+      priceHint: process.env.BILLING_PRICE_HINT_BASIC ?? "USD $19 (once-off)",
       tagline:
         process.env.BILLING_TAGLINE_BASIC ??
-        "Full polish for students, job seekers, and first-time freelancers.",
+        "One-time investment for professionals who need stronger visibility.",
       portfolios: maxPortfoliosForTier("basic"),
       themes: "All themes",
       customDomain: false,
       analytics: true,
-      branding: true,
+      branding: false,
       includes: [
         "Up to 5 portfolios",
         "All themes (Glass, Minimal, Bold)",
-        "Dashboard analytics (views & project clicks)",
+        "Basic analytics (views & project clicks)",
         "Unlimited edits & republish",
+        "No “Made with” branding",
+        "One-time payment",
       ],
       restrictions: [
-        "“Made with PortfolioForge” on public pages",
         "No custom domain",
       ],
     },
     premium: {
-      label: process.env.BILLING_LABEL_PREMIUM ?? "Premium",
-      priceHint: process.env.BILLING_PRICE_HINT_PREMIUM ?? "N$150 – N$300",
+      label: process.env.BILLING_LABEL_PREMIUM ?? "Premium ($49)",
+      priceHint: process.env.BILLING_PRICE_HINT_PREMIUM ?? "USD $49 (once-off)",
       tagline:
         process.env.BILLING_TAGLINE_PREMIUM ??
-        "Your brand on your domain — for serious freelancers and consultants.",
-      portfolios: "High limit",
+        "The last portfolio fee you pay: one-time, long-term professional presence.",
+      portfolios: maxPortfoliosForTier("premium"),
       themes: "All themes",
       customDomain: true,
       analytics: true,
@@ -292,9 +293,9 @@ export function billingPlansPayload() {
       includes: ["Everything in Basic"],
       extras: [
         "Custom domain (DNS when you are ready)",
-        "Remove “Made with PortfolioForge”",
-        "Very high portfolio limit",
-        "Same analytics & all themes",
+        "Advanced analytics",
+        "Up to 50 portfolios",
+        "One-time payment",
       ],
     },
     free: {
@@ -310,6 +311,7 @@ export function billingPlansPayload() {
         "Glass theme only",
         "Public URL & print/PDF export",
         "Social links on your page",
+        "Path domain: pf.me/user style URL",
       ],
       restrictions: ["No custom domain", "No dashboard analytics", "“Made with PortfolioForge” on your page"],
     },
