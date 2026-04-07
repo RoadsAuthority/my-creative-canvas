@@ -15,7 +15,7 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
   const onDashboard = pathname.startsWith("/app");
 
   return (
-    <header className="sticky top-0 z-50 border-b border-white/10 bg-background/75 backdrop-blur-xl">
+    <header className="no-print sticky top-0 z-50 border-b border-white/10 bg-background/75 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5 md:px-8">
         <Link to="/" className="group flex items-center gap-2 font-display text-lg font-bold tracking-tight">
           <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 text-primary transition-colors group-hover:bg-primary/25">

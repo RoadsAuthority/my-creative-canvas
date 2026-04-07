@@ -3,7 +3,6 @@ import { BarChart3, Eye, Github, Globe, Linkedin, MapPin, Mail } from "lucide-re
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { SiteFooter } from "@/components/SiteFooter";
-import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPortfolioAnalytics, trackPortfolioView, trackProjectClick } from "@/lib/analytics-service";
 import { getPortfolioBySlug } from "@/lib/portfolio-service";
@@ -53,7 +52,6 @@ const Portfolio = () => {
     data?.isOwner ?? (user && data?.user_id !== undefined && data.user_id === user.id),
   );
   const visitorChrome = !isOwner || visitorPreview;
-  const showDashboardInHeader = Boolean(user && (!isOwner || !visitorPreview));
 
   useEffect(() => {
     if (data?.fullName) document.title = `${data.fullName} · Portfolio`;
@@ -82,7 +80,6 @@ const Portfolio = () => {
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <SiteHeader showDashboard={Boolean(user)} />
         <div className="flex flex-1 flex-col items-center justify-center gap-4 px-6">
           <div className="h-12 w-12 animate-pulse rounded-2xl bg-primary/20" />
           <p className="text-sm text-muted-foreground">Loading portfolio…</p>
@@ -94,7 +91,6 @@ const Portfolio = () => {
   if (!data) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
-        <SiteHeader showDashboard={Boolean(user)} />
         <div className="flex flex-1 items-center justify-center px-6">
           <div className="glass-card max-w-md rounded-3xl p-10 text-center">
             <h1 className="text-2xl font-bold">Portfolio not found</h1>
@@ -152,8 +148,6 @@ const Portfolio = () => {
           </div>
         </div>
       ) : null}
-
-      <SiteHeader showDashboard={showDashboardInHeader} />
 
       <main className="px-5 pb-16 pt-10 md:px-10">
         <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(var(--primary)/0.08),transparent_55%)]" />
@@ -301,9 +295,26 @@ const Portfolio = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: idx * 0.06 }}
                 >
-                  {project.imageUrl ? (
-                    <div className="aspect-[21/9] max-h-72 w-full overflow-hidden md:aspect-[3/1]">
-                      <img src={project.imageUrl} alt="" className="h-full w-full object-cover" />
+                  {((project.imageUrls?.length ?? 0) > 0 || project.imageUrl || (project.videoUrls?.length ?? 0) > 0) ? (
+                    <div className="p-4 md:p-5">
+                      {(project.imageUrls?.length ?? 0) > 0 || project.imageUrl ? (
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {(project.imageUrls?.length ? project.imageUrls : project.imageUrl ? [project.imageUrl] : []).map((img, i) => (
+                            <div key={`${project.id}-img-${i}`} className="overflow-hidden rounded-xl border border-white/10">
+                              <img src={img} alt="" className="h-48 w-full object-cover md:h-56" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
+                      {(project.videoUrls?.length ?? 0) > 0 ? (
+                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          {(project.videoUrls ?? []).map((video, i) => (
+                            <div key={`${project.id}-video-${i}`} className="overflow-hidden rounded-xl border border-white/10">
+                              <video src={video} controls className="h-48 w-full object-cover md:h-56" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : null}
                     </div>
                   ) : null}
                   <div className="p-6 md:p-8">

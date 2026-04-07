@@ -7,6 +7,8 @@ export interface PortfolioProject {
   summary: string;
   link: string;
   tags: string;
+  imageUrls?: string[];
+  videoUrls?: string[];
   imageUrl?: string;
 }
 

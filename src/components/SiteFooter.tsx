@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-background/50 py-12 text-center text-sm text-muted-foreground">
+    <footer className="no-print border-t border-white/10 bg-background/50 py-12 text-center text-sm text-muted-foreground">
       <div className="mx-auto max-w-6xl px-5">
         <p className="font-display font-semibold text-foreground">
           Portfolio<span className="text-primary">Forge</span>

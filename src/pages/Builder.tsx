@@ -21,6 +21,8 @@ const createProject = (): PortfolioProject => ({
   summary: "",
   link: "",
   tags: "",
+  imageUrls: [],
+  videoUrls: [],
   imageUrl: "",
 });
 
@@ -47,6 +49,8 @@ const ALLOWED_CV_TYPES = [
   "application/msword",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 ];
+const MAX_VIDEO_SIZE_MB = 25;
+const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 
 const Builder = ({ userId }: BuilderProps) => {
   const navigate = useNavigate();
@@ -212,14 +216,48 @@ const Builder = ({ userId }: BuilderProps) => {
     reader.readAsDataURL(file);
   };
 
-  const uploadProjectImage = (projectId: string, file?: File) => {
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      updateProject(projectId, "imageUrl", result);
-    };
-    reader.readAsDataURL(file);
+  const uploadProjectImages = (projectId: string, files?: FileList | null) => {
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : "";
+        setProjects((prev) =>
+          prev.map((project) => {
+            if (project.id !== projectId) return project;
+            const nextImages = [...(project.imageUrls ?? []), result];
+            return { ...project, imageUrls: nextImages, imageUrl: nextImages[0] ?? "" };
+          }),
+        );
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const uploadProjectVideos = (projectId: string, files?: FileList | null) => {
+    if (!files?.length) return;
+    for (const file of Array.from(files)) {
+      if (!file.type.startsWith("video/")) {
+        toast.error("Only video files are allowed.");
+        continue;
+      }
+      if (file.size > MAX_VIDEO_SIZE_BYTES) {
+        toast.error(`Video "${file.name}" is too large. Max size is ${MAX_VIDEO_SIZE_MB}MB.`);
+        continue;
+      }
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = typeof reader.result === "string" ? reader.result : "";
+        setProjects((prev) =>
+          prev.map((project) =>
+            project.id === projectId
+              ? { ...project, videoUrls: [...(project.videoUrls ?? []), result] }
+              : project,
+          ),
+        );
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/portfolio/${slug}`;
@@ -734,31 +772,78 @@ const Builder = ({ userId }: BuilderProps) => {
                         className="glass-subtle rounded-lg border border-white/10 bg-transparent p-2.5 outline-none focus:border-primary"
                       />
                     </div>
-                    <div className="mt-3">
-                      <label className="mb-1 block text-xs text-muted-foreground">Image</label>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={(e) => uploadProjectImage(project.id, e.target.files?.[0])}
-                        className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
-                      />
-                      {project.imageUrl ? (
-                        <div className="mt-3">
-                          <img
-                            src={project.imageUrl}
-                            alt=""
-                            className="h-28 w-full rounded-lg object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => updateProject(project.id, "imageUrl", "")}
-                            className="mt-2 inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
-                          >
-                            <X className="h-3.5 w-3.5" />
-                            Remove image
-                          </button>
-                        </div>
-                      ) : null}
+                    <div className="mt-3 grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs text-muted-foreground">Images (multiple)</label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={(e) => uploadProjectImages(project.id, e.target.files)}
+                          className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
+                        />
+                        {(project.imageUrls?.length || project.imageUrl) ? (
+                          <div className="mt-3 grid grid-cols-2 gap-2">
+                            {(project.imageUrls?.length ? project.imageUrls : project.imageUrl ? [project.imageUrl] : []).map((src, i) => (
+                              <div key={`${project.id}-img-${i}`} className="relative">
+                                <img src={src} alt="" className="h-24 w-full rounded-lg object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setProjects((prev) =>
+                                      prev.map((p) => {
+                                        if (p.id !== project.id) return p;
+                                        const arr = p.imageUrls?.length ? [...p.imageUrls] : p.imageUrl ? [p.imageUrl] : [];
+                                        arr.splice(i, 1);
+                                        return { ...p, imageUrls: arr, imageUrl: arr[0] ?? "" };
+                                      }),
+                                    )
+                                  }
+                                  className="absolute right-1 top-1 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white"
+                                >
+                                  X
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-muted-foreground">
+                          Videos (multiple, max {MAX_VIDEO_SIZE_MB}MB each)
+                        </label>
+                        <input
+                          type="file"
+                          accept="video/*"
+                          multiple
+                          onChange={(e) => uploadProjectVideos(project.id, e.target.files)}
+                          className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
+                        />
+                        {project.videoUrls?.length ? (
+                          <div className="mt-3 space-y-2">
+                            {project.videoUrls.map((src, i) => (
+                              <div key={`${project.id}-vid-${i}`} className="relative rounded-lg border border-white/10 p-1.5">
+                                <video src={src} controls className="h-24 w-full rounded object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setProjects((prev) =>
+                                      prev.map((p) =>
+                                        p.id === project.id
+                                          ? { ...p, videoUrls: (p.videoUrls ?? []).filter((_, idx) => idx !== i) }
+                                          : p,
+                                      ),
+                                    )
+                                  }
+                                  className="absolute right-2 top-2 rounded bg-black/60 px-1.5 py-0.5 text-[10px] text-white"
+                                >
+                                  X
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   </div>
                 ))}
