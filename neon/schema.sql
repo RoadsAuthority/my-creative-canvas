@@ -24,6 +24,8 @@ create table if not exists portfolios (
   theme text not null default 'glass',
   custom_domain text not null default '',
   custom_domain_verified boolean not null default false,
+  custom_domain_verify_token text not null default '',
+  custom_domain_last_checked_at timestamptz,
   social_links jsonb not null default '{}'::jsonb,
   projects jsonb not null default '[]'::jsonb,
   created_at timestamptz not null default now(),

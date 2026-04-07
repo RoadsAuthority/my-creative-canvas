@@ -79,6 +79,16 @@ export const getPortfolioBySlug = async (slug: string): Promise<PortfolioRecord 
   return (await res.json()) as PortfolioRecord;
 };
 
+export const getPortfolioByDomain = async (host: string): Promise<PortfolioRecord | null> => {
+  if (!API_BASE) return null;
+  const res = await fetch(`${API_BASE}/portfolios/by-domain?host=${encodeURIComponent(host)}`, {
+    credentials: "include",
+  });
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error("Failed to resolve domain portfolio");
+  return (await res.json()) as PortfolioRecord;
+};
+
 export const upsertPortfolio = async (item: PortfolioRecord): Promise<void> => {
   if (!API_BASE) {
     const items = loadLocal();
@@ -120,4 +130,21 @@ export const deletePortfolio = async (id: string): Promise<void> => {
     const msg = typeof body?.message === "string" ? body.message : "Failed to delete portfolio";
     throw new Error(msg);
   }
+};
+
+export const verifyCustomDomain = async (slug: string): Promise<{ verified: boolean; message: string }> => {
+  if (!API_BASE) return { verified: false, message: "API not connected." };
+  const res = await apiFetch(`/domains/verify`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ slug }),
+  });
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    return { verified: false, message: typeof body?.message === "string" ? body.message : "Verification failed." };
+  }
+  return {
+    verified: Boolean(body?.verified),
+    message: typeof body?.message === "string" ? body.message : "Verification complete.",
+  };
 };

@@ -9,7 +9,7 @@ import { randomId } from "@/lib/id";
 import { getPortfolioAnalytics } from "@/lib/analytics-service";
 import { signOut } from "@/lib/auth-service";
 import { fetchBillingStatus, type BillingStatus } from "@/lib/billing-service";
-import { deletePortfolio, listPortfoliosByUser, upsertPortfolio } from "@/lib/portfolio-service";
+import { deletePortfolio, listPortfoliosByUser, upsertPortfolio, verifyCustomDomain } from "@/lib/portfolio-service";
 import type { PortfolioRecord } from "@/lib/portfolio-service";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PortfolioData, PortfolioProject, PortfolioTheme, SocialLinks } from "@/types/portfolio";
@@ -64,6 +64,8 @@ const Builder = ({ userId }: BuilderProps) => {
   const [location, setLocation] = useState("");
   const [theme, setTheme] = useState<PortfolioTheme>("glass");
   const [customDomain, setCustomDomain] = useState("");
+  const [customDomainVerified, setCustomDomainVerified] = useState(false);
+  const [customDomainVerifyToken, setCustomDomainVerifyToken] = useState("");
   const [social, setSocial] = useState<SocialLinks>(emptySocial);
   const [slug, setSlug] = useState("");
   const [projects, setProjects] = useState<PortfolioProject[]>([createProject()]);
@@ -137,6 +139,8 @@ const Builder = ({ userId }: BuilderProps) => {
     setLocation("");
     setTheme("glass");
     setCustomDomain("");
+    setCustomDomainVerified(false);
+    setCustomDomainVerifyToken("");
     setSocial(emptySocial());
     setProjects([createProject()]);
     setSelectedSlug(null);
@@ -155,6 +159,8 @@ const Builder = ({ userId }: BuilderProps) => {
     setLocation(p.location);
     setTheme(p.theme);
     setCustomDomain(p.customDomain);
+    setCustomDomainVerified(Boolean(p.customDomainVerified));
+    setCustomDomainVerifyToken(p.customDomainVerifyToken ?? "");
     setSocial({
       website: p.socialLinks?.website ?? "",
       linkedin: p.socialLinks?.linkedin ?? "",
@@ -269,7 +275,8 @@ const Builder = ({ userId }: BuilderProps) => {
       location: location.trim(),
       theme,
       customDomain: customDomain.trim(),
-      customDomainVerified: false,
+      customDomainVerified,
+      customDomainVerifyToken,
       socialLinks: Object.keys(socialClean).length ? socialClean : undefined,
       projects: cleanProjects,
       createdAt: new Date().toISOString(),
@@ -537,7 +544,10 @@ const Builder = ({ userId }: BuilderProps) => {
                   <label className="mb-1.5 block text-xs text-muted-foreground">Custom domain (optional)</label>
                   <input
                     value={customDomain}
-                    onChange={(e) => setCustomDomain(e.target.value)}
+                    onChange={(e) => {
+                      setCustomDomain(e.target.value);
+                      setCustomDomainVerified(false);
+                    }}
                     placeholder="portfolio.yourdomain.com"
                     disabled={Boolean(billing && !billing.limits.customDomain)}
                     className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
@@ -545,8 +555,43 @@ const Builder = ({ userId }: BuilderProps) => {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {billing && !billing.limits.customDomain
                       ? "Custom domain is a Premium feature — upgrade on the Plans page."
-                      : "Point DNS when you are ready — we will verify in a later step."}
+                      : "Add your domain/subdomain. Save first, then verify DNS with the TXT token below."}
                   </p>
+                  {billing?.limits.customDomain && customDomain ? (
+                    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs text-muted-foreground">
+                      <p>
+                        Status:{" "}
+                        <span className={customDomainVerified ? "text-emerald-400" : "text-amber-400"}>
+                          {customDomainVerified ? "Verified" : "Not verified"}
+                        </span>
+                      </p>
+                      {customDomainVerifyToken ? (
+                        <>
+                          <p className="mt-2">Create TXT record:</p>
+                          <p className="font-mono text-foreground">Host: _pf-verify.{customDomain}</p>
+                          <p className="font-mono text-foreground">Value: {customDomainVerifyToken}</p>
+                        </>
+                      ) : (
+                        <p className="mt-2">Save this portfolio first to generate your DNS verification token.</p>
+                      )}
+                      <button
+                        type="button"
+                        disabled={!customDomainVerifyToken || !editingId}
+                        onClick={async () => {
+                          const result = await verifyCustomDomain(slug);
+                          if (result.verified) {
+                            setCustomDomainVerified(true);
+                            toast.success(result.message);
+                          } else {
+                            toast.error(result.message);
+                          }
+                        }}
+                        className="glass-subtle mt-3 rounded-full px-3 py-1.5 text-xs disabled:opacity-50"
+                      >
+                        Verify domain
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

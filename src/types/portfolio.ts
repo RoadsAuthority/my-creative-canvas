@@ -31,6 +31,8 @@ export interface PortfolioData {
   theme: PortfolioTheme;
   customDomain: string;
   customDomainVerified: boolean;
+  customDomainVerifyToken?: string;
+  customDomainLastCheckedAt?: string;
   socialLinks?: SocialLinks;
   projects: PortfolioProject[];
   createdAt: string;

@@ -2,6 +2,8 @@
  * API server — connects to Neon via DATABASE_URL (never expose this to the browser).
  */
 import { randomUUID } from "node:crypto";
+import { randomBytes } from "node:crypto";
+import { resolveTxt } from "node:dns/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import dotenv from "dotenv";
@@ -160,6 +162,18 @@ async function ensureBillingSchema(): Promise<void> {
     ALTER TABLE portfolios
     ADD COLUMN IF NOT EXISTS cv_file_name text NOT NULL DEFAULT ''
   `);
+  await pool.query(`
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS custom_domain_verify_token text NOT NULL DEFAULT ''
+  `);
+  await pool.query(`
+    ALTER TABLE portfolios
+    ADD COLUMN IF NOT EXISTS custom_domain_last_checked_at timestamptz
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS idx_portfolios_custom_domain
+    ON portfolios(custom_domain)
+  `);
 }
 
 type JwtPayload = { userId: string; email: string };
@@ -209,6 +223,8 @@ type DbPortfolio = {
   theme: string;
   custom_domain: string;
   custom_domain_verified: boolean;
+  custom_domain_verify_token: string;
+  custom_domain_last_checked_at: Date | null;
   social_links?: unknown;
   projects: unknown;
   created_at: Date;
@@ -234,6 +250,8 @@ function rowToClient(row: DbPortfolio) {
     theme: row.theme,
     customDomain: row.custom_domain,
     customDomainVerified: row.custom_domain_verified,
+    customDomainVerifyToken: row.custom_domain_verify_token ?? "",
+    customDomainLastCheckedAt: row.custom_domain_last_checked_at?.toISOString() ?? "",
     socialLinks: social as Record<string, string>,
     projects: row.projects,
     createdAt: row.created_at.toISOString(),
@@ -243,9 +261,20 @@ function rowToClient(row: DbPortfolio) {
 /** Public slug response: never expose user_id; include isOwner + branding flag from owner tier. */
 function rowToPublicPayload(row: DbPortfolio, isOwner: boolean, ownerBillingTier?: string) {
   const full = rowToClient(row);
-  const { user_id: _uid, ...rest } = full;
+  const { user_id: _uid, customDomainVerifyToken: _t, customDomainLastCheckedAt: _lc, ...rest } = full;
   const tier = normalizeTier(ownerBillingTier);
   return { ...rest, isOwner, showPoweredBy: showPoweredByForTier(tier) };
+}
+
+function normalizeDomainInput(raw: string | undefined): string {
+  if (!raw) return "";
+  let d = raw.trim().toLowerCase();
+  d = d.replace(/^https?:\/\//, "").replace(/\/.*$/, "").replace(/\.+$/, "");
+  return d;
+}
+
+function generateDomainVerifyToken(): string {
+  return `pf-${randomBytes(10).toString("hex")}`;
 }
 
 app.post("/auth/signup", authLimiter, async (req, res) => {
@@ -445,6 +474,81 @@ app.get("/portfolios/:slug", async (req, res) => {
   res.json(rowToPublicPayload(portfolioRow as DbPortfolio, isOwner, ownerTier));
 });
 
+app.get("/portfolios/by-domain", async (req, res) => {
+  const host = normalizeDomainInput(String(req.query.host ?? ""));
+  if (!host) {
+    res.status(400).json({ message: "host query required" });
+    return;
+  }
+  const { rows } = await pool.query<DbPortfolio & { owner_billing_tier?: string }>(
+    `SELECT p.*, u.billing_tier AS owner_billing_tier
+     FROM portfolios p INNER JOIN users u ON u.id = p.user_id
+     WHERE p.custom_domain = $1 AND p.custom_domain_verified = true`,
+    [host],
+  );
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ message: "Not found" });
+    return;
+  }
+  const viewerId = optionalAuthUserId(req);
+  const isOwner = Boolean(viewerId && viewerId === row.user_id);
+  const ownerTier = row.owner_billing_tier;
+  const { owner_billing_tier: _o, ...portfolioRow } = row;
+  res.json(rowToPublicPayload(portfolioRow as DbPortfolio, isOwner, ownerTier));
+});
+
+app.post("/domains/verify", authMiddleware, async (req, res) => {
+  const userId = (req as express.Request & { userId: string }).userId;
+  const slug = (req.body as { slug?: string }).slug?.trim();
+  if (!slug) {
+    res.status(400).json({ message: "slug required" });
+    return;
+  }
+  const tier = await getUserTier(pool, userId);
+  if (tier !== "premium") {
+    res.status(402).json({ message: "Custom domains require Premium." });
+    return;
+  }
+  const { rows } = await pool.query<DbPortfolio>(
+    `SELECT * FROM portfolios WHERE slug = $1 AND user_id = $2`,
+    [slug, userId],
+  );
+  const row = rows[0];
+  if (!row) {
+    res.status(404).json({ message: "Portfolio not found" });
+    return;
+  }
+  const domain = normalizeDomainInput(row.custom_domain);
+  const token = (row.custom_domain_verify_token ?? "").trim();
+  if (!domain || !token) {
+    res.status(400).json({ message: "Set a custom domain first." });
+    return;
+  }
+  const txtHost = `_pf-verify.${domain}`;
+  let verified = false;
+  try {
+    const records = await resolveTxt(txtHost);
+    const flat = records.flat().join(" ");
+    verified = flat.includes(token);
+  } catch {
+    verified = false;
+  }
+  await pool.query(
+    `UPDATE portfolios SET custom_domain_verified = $3, custom_domain_last_checked_at = now()
+     WHERE id = $1 AND user_id = $2`,
+    [row.id, userId, verified],
+  );
+  if (!verified) {
+    res.status(409).json({
+      verified: false,
+      message: `TXT record not found. Add ${txtHost} with value ${token} and retry.`,
+    });
+    return;
+  }
+  res.json({ verified: true, message: "Domain verified." });
+});
+
 app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
   const userId = (req as express.Request & { userId: string }).userId;
   const body = req.body as {
@@ -473,7 +577,8 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
     user_id: string;
     custom_domain: string;
     custom_domain_verified: boolean;
-  }>(`SELECT user_id, custom_domain, custom_domain_verified FROM portfolios WHERE slug = $1`, [body.slug]);
+    custom_domain_verify_token: string;
+  }>(`SELECT user_id, custom_domain, custom_domain_verified, custom_domain_verify_token FROM portfolios WHERE slug = $1`, [body.slug]);
 
   if (existing.rows[0] && existing.rows[0].user_id !== userId) {
     res.status(403).json({ message: "This slug is taken" });
@@ -497,15 +602,24 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
   const { theme: safeTheme, customDomain: newDomain } = sanitizeUpsertForTier(
     tier,
     body.theme,
-    body.customDomain,
+    normalizeDomainInput(body.customDomain),
   );
 
   /** Never trust the client for verification — only DNS/admin flows may set true in DB. */
   let customDomainVerified = false;
+  let customDomainVerifyToken = "";
   if (existing.rows[0]) {
     const prevDomain = (existing.rows[0].custom_domain ?? "").trim();
     customDomainVerified =
       newDomain === prevDomain ? existing.rows[0].custom_domain_verified : false;
+    customDomainVerifyToken =
+      newDomain && newDomain === prevDomain
+        ? existing.rows[0].custom_domain_verify_token
+        : newDomain
+          ? generateDomainVerifyToken()
+          : "";
+  } else if (newDomain) {
+    customDomainVerifyToken = generateDomainVerifyToken();
   }
 
   const id = body.id && /^[0-9a-f-]{36}$/i.test(body.id) ? body.id : randomUUID();
@@ -516,10 +630,10 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
     await pool.query(
       `UPDATE portfolios SET
         full_name = $2, profile_image_url = $3, cv_url = $4, cv_file_name = $5, headline = $6, bio = $7, email = $8, location = $9,
-        theme = $10, custom_domain = $11, custom_domain_verified = $12,
-        social_links = $13::jsonb, projects = $14::jsonb,
+        theme = $10, custom_domain = $11, custom_domain_verified = $12, custom_domain_verify_token = $13,
+        social_links = $14::jsonb, projects = $15::jsonb,
         updated_at = now()
-      WHERE slug = $1 AND user_id = $15`,
+      WHERE slug = $1 AND user_id = $16`,
       [
         body.slug,
         body.fullName,
@@ -533,6 +647,7 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
         safeTheme,
         newDomain,
         customDomainVerified,
+        customDomainVerifyToken,
         socialJson,
         projectsJson,
         userId,
@@ -542,8 +657,8 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
     await pool.query(
       `INSERT INTO portfolios (
         id, user_id, slug, full_name, profile_image_url, cv_url, cv_file_name, headline, bio, email, location, theme,
-        custom_domain, custom_domain_verified, social_links, projects
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15::jsonb, $16::jsonb)`,
+        custom_domain, custom_domain_verified, custom_domain_verify_token, social_links, projects
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb)`,
       [
         id,
         userId,
@@ -559,6 +674,7 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
         safeTheme,
         newDomain,
         false,
+        customDomainVerifyToken,
         socialJson,
         projectsJson,
       ],

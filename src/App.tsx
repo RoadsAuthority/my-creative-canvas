@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -15,10 +16,45 @@ import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Refunds from "./pages/Refunds.tsx";
 import ContactUs from "./pages/ContactUs.tsx";
+import { getPortfolioByDomain } from "./lib/portfolio-service";
 
 const queryClient = new QueryClient();
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
+const knownHosts = new Set([
+  "localhost",
+  "127.0.0.1",
+  "www.portfolioforge.uk",
+  "portfolioforge.uk",
+  "app.portfolioforge.uk",
+  "api.portfolioforge.uk",
+]);
+
+function HomeRoute() {
+  const [resolvedSlug, setResolvedSlug] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    const host = window.location.hostname.toLowerCase();
+    if (knownHosts.has(host) || host.endsWith(".vercel.app")) {
+      setChecked(true);
+      return;
+    }
+    if (!hasApi) {
+      setChecked(true);
+      return;
+    }
+    getPortfolioByDomain(host)
+      .then((p) => setResolvedSlug(p?.slug ?? null))
+      .finally(() => setChecked(true));
+  }, []);
+
+  if (!checked) {
+    return <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">Loading...</div>;
+  }
+  if (resolvedSlug) return <Navigate to={`/portfolio/${resolvedSlug}`} replace />;
+  return <Landing />;
+}
 
 function AppRoutes() {
   const { user, loading } = useAuth();
@@ -34,7 +70,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      <Route path="/" element={<Landing />} />
+      <Route path="/" element={<HomeRoute />} />
       <Route path="/auth" element={<Auth />} />
       <Route
         path="/app"
