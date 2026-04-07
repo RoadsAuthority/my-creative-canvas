@@ -44,7 +44,7 @@ function requireEnv(name: string, hint: string): string {
   return value;
 }
 
-const PORT = Number(process.env.API_PORT) || 3001;
+const PORT = Number(process.env.PORT || process.env.API_PORT) || 3001;
 const DATABASE_URL = requireEnv("DATABASE_URL", "add your Neon connection string.");
 const JWT_SECRET = requireEnv("JWT_SECRET", "set a long random string for signing login cookies.");
 const NODE_ENV = process.env.NODE_ENV ?? "development";

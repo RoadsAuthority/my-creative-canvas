@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# PortfolioForge
 
-TODO: Document your project here
+Portfolio builder and publishing platform with auth, billing tiers, and customizable portfolio pages.

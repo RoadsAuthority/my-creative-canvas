@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="PortfolioForge icon">
+  <defs>
+    <linearGradient id="pfg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2fc3ff" />
+      <stop offset="100%" stop-color="#8c63ff" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="56" height="56" rx="16" fill="#0f172a" />
+  <rect x="5" y="5" width="54" height="54" rx="15" fill="none" stroke="url(#pfg)" stroke-width="2" />
+  <path d="M20 22h15c6.2 0 10 3 10 8.1S41.2 38 35 38h-8v8h-7V22Zm14 10c2.7 0 4.1-0.8 4.1-2.6S36.7 27 34 27h-7v5h7Z" fill="#e2e8f0"/>
+  <path d="M22 48h20" stroke="url(#pfg)" stroke-width="3" stroke-linecap="round"/>
+</svg>

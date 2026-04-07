@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0b1220"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+    <linearGradient id="acc" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2fc3ff"/>
+      <stop offset="100%" stop-color="#8c63ff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1030" cy="90" r="180" fill="#2fc3ff" opacity="0.12"/>
+  <circle cx="120" cy="560" r="210" fill="#8c63ff" opacity="0.1"/>
+  <rect x="90" y="95" width="130" height="130" rx="34" fill="#0f172a" stroke="url(#acc)" stroke-width="4"/>
+  <text x="128" y="182" fill="#e2e8f0" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="78" font-weight="700">PF</text>
+  <text x="270" y="165" fill="#f8fafc" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="72" font-weight="700">PortfolioForge</text>
+  <text x="270" y="235" fill="#a5b4fc" font-family="Inter,Segoe UI,Arial,sans-serif" font-size="34">Build and publish professional portfolios fast.</text>
+</svg>
