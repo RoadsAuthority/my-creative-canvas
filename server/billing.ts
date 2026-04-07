@@ -251,14 +251,14 @@ export function billingPlansPayload() {
 
   return {
     mode: getBillingMode(),
-    currency: process.env.BILLING_DISPLAY_CURRENCY ?? "NAD",
+    currency: "USD",
     paymentProvider: provider,
     paypalCurrency: process.env.PAYPAL_CURRENCY ?? "USD",
     checkoutAvailable: provider !== "manual" && (provider === "paypal" ? paypalConfigured() : stripeConfigured()),
     manualConfigured: provider === "manual" ? manualReady : true,
     basic: {
       label: process.env.BILLING_LABEL_BASIC ?? "Basic ($19)",
-      priceHint: process.env.BILLING_PRICE_HINT_BASIC ?? "USD $19 (once-off)",
+      priceHint: "USD $19 (once-off)",
       tagline:
         process.env.BILLING_TAGLINE_BASIC ??
         "One-time investment for professionals who need stronger visibility.",
@@ -281,7 +281,7 @@ export function billingPlansPayload() {
     },
     premium: {
       label: process.env.BILLING_LABEL_PREMIUM ?? "Premium ($49)",
-      priceHint: process.env.BILLING_PRICE_HINT_PREMIUM ?? "USD $49 (once-off)",
+      priceHint: "USD $49 (once-off)",
       tagline:
         process.env.BILLING_TAGLINE_PREMIUM ??
         "The last portfolio fee you pay: one-time, long-term professional presence.",
