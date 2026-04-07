@@ -17,6 +17,9 @@ export function SiteFooter() {
           <Link to="/portfolio/demo" className="hover:text-primary">
             View sample
           </Link>
+          <Link to="/contact" className="hover:text-primary">
+            Contact us
+          </Link>
           <Link to="/privacy" className="hover:text-primary">
             Privacy
           </Link>

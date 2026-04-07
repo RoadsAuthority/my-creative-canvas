@@ -72,10 +72,7 @@ const Landing = () => {
   const premiumIncludes = p?.includes?.length ? p.includes : premiumTierCopy.includes;
   const premiumExtras = p?.extras?.length ? p.extras : premiumTierCopy.extras ?? [];
 
-  const currencyNote =
-    livePlans?.currency && livePlans.currency !== PRICING_CURRENCY
-      ? `Display currency: ${livePlans.currency}. Card/PayPal charges may differ.`
-      : `Prices shown in ${PRICING_CURRENCY}. Basic and Premium are once-off payments.`;
+  const currencyNote = `Prices shown in ${PRICING_CURRENCY}. Basic and Premium are once-off payments.`;
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,9 +114,7 @@ const Landing = () => {
                   View live sample
                 </Link>
               </div>
-              <p className="mt-6 text-sm text-muted-foreground">
-                No credit card for the demo flow · Works with your own database when the API is connected
-              </p>
+              <p className="mt-6 text-sm text-muted-foreground">One-time pricing. No recurring subscription required.</p>
             </motion.div>
 
             <motion.div

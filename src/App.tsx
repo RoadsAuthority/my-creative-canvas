@@ -14,6 +14,7 @@ import Analytics from "./pages/Analytics.tsx";
 import Privacy from "./pages/Privacy.tsx";
 import Terms from "./pages/Terms.tsx";
 import Refunds from "./pages/Refunds.tsx";
+import ContactUs from "./pages/ContactUs.tsx";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ function AppRoutes() {
       <Route path="/privacy" element={<Privacy />} />
       <Route path="/terms" element={<Terms />} />
       <Route path="/refunds" element={<Refunds />} />
+      <Route path="/contact" element={<ContactUs />} />
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
