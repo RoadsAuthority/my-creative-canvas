@@ -4,6 +4,9 @@ create table if not exists users (
   id uuid primary key default gen_random_uuid(),
   email text unique not null,
   password_hash text not null,
+  full_name text not null default '',
+  company text not null default '',
+  avatar_url text not null default '',
   billing_tier text not null default 'free' check (billing_tier in ('free', 'basic', 'premium')),
   stripe_customer_id text,
   created_at timestamptz not null default now()
@@ -34,7 +37,7 @@ create table if not exists portfolios (
 
 create table if not exists portfolio_analytics (
   id uuid primary key default gen_random_uuid(),
-  portfolio_slug text not null references portfolios(slug) on delete cascade,
+  portfolio_slug text not null references portfolios(slug) on delete cascade on update cascade,
   event_type text not null check (event_type in ('view', 'project_click')),
   created_at timestamptz not null default now()
 );

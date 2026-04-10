@@ -97,3 +97,36 @@ export const signOut = async () => {
   }
   saveLocalUser(null);
 };
+
+export const updateProfile = async (payload: {
+  fullName: string;
+  company: string;
+  avatarUrl: string;
+}): Promise<AuthUser> => {
+  if (API_BASE) {
+    const res = await fetch(`${API_BASE}/auth/profile`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify(payload),
+    });
+    const data = await readJsonBody<{ message?: string; user?: AuthUser }>(res);
+    if (!res.ok) {
+      throw new Error(data.message ?? "Could not update profile");
+    }
+    return data.user as AuthUser;
+  }
+
+  const raw = localStorage.getItem(USER_KEY);
+  const current = raw ? (JSON.parse(raw) as AuthUser) : null;
+  const merged: AuthUser = {
+    id: current?.id ?? "local-user",
+    email: current?.email ?? "local@example.com",
+    billingTier: current?.billingTier ?? "free",
+    fullName: payload.fullName,
+    company: payload.company,
+    avatarUrl: payload.avatarUrl,
+  };
+  saveLocalUser(merged);
+  return merged;
+};

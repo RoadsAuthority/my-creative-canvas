@@ -29,15 +29,21 @@ const DEMO_PORTFOLIO: PortfolioRecord = {
     website: "https://example.com",
     linkedin: "https://linkedin.com/in/example",
     github: "https://github.com/example",
+    aboutTitle: "Design with purpose and personality",
+    aboutText: "I design and ship digital products that blend strategy, craft, and measurable outcomes.",
   },
   projects: [
     {
       id: "p1",
       title: "Finance Dashboard",
       role: "Lead Product Designer",
-      summary: "Redesigned onboarding and dashboard workflows, improving activation by 28%.",
+      summary:
+        "End-to-end redesign of onboarding and the core dashboard for a B2B finance product, aligning IA with how teams actually work.",
+      problem: "Activation stalled after signup; users struggled to connect accounts and reach their first meaningful insight.",
+      outcome: "+28% activation in 6 weeks; −35% time-to-first-value in usability tests.",
+      stack: "Figma, React, TypeScript, Storybook",
       link: "https://example.com",
-      tags: "Figma, UX, React",
+      tags: "Product design, UX research",
       imageUrl: "",
     },
   ],
@@ -114,7 +120,10 @@ export const upsertPortfolio = async (item: PortfolioRecord): Promise<void> => {
   }
   if (!res.ok) {
     const errBody = await res.json().catch(() => ({}));
-    const message = typeof errBody?.message === "string" ? errBody.message : "Failed to save portfolio";
+    let message = typeof errBody?.message === "string" ? errBody.message : "Failed to save portfolio";
+    if (typeof (errBody as { detail?: string }).detail === "string") {
+      message = `${message} — ${(errBody as { detail: string }).detail}`;
+    }
     throw new Error(message);
   }
 };

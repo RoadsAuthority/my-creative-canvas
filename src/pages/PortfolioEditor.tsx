@@ -1,15 +1,15 @@
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Copy, ExternalLink, Plus, RotateCcw, Sparkles, Trash2, X } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { ArrowLeft, Copy, Plus, Sparkles, X } from "lucide-react";
+import { Link, useMatch, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { randomId } from "@/lib/id";
-import { getPortfolioAnalytics } from "@/lib/analytics-service";
 import { signOut } from "@/lib/auth-service";
 import { fetchBillingStatus, type BillingStatus } from "@/lib/billing-service";
-import { deletePortfolio, listPortfoliosByUser, upsertPortfolio, verifyCustomDomain } from "@/lib/portfolio-service";
+import { listPortfoliosByUser, upsertPortfolio, verifyCustomDomain } from "@/lib/portfolio-service";
 import type { PortfolioRecord } from "@/lib/portfolio-service";
 import { useAuth } from "@/contexts/AuthContext";
 import type { PortfolioData, PortfolioProject, PortfolioTheme, SocialLinks } from "@/types/portfolio";
@@ -19,6 +19,9 @@ const createProject = (): PortfolioProject => ({
   title: "",
   role: "",
   summary: "",
+  problem: "",
+  outcome: "",
+  stack: "",
   link: "",
   tags: "",
   imageUrls: [],
@@ -35,11 +38,20 @@ const slugify = (value: string) =>
     .replace(/-+/g, "-")
     .replace(/^-|-$/g, "") || "portfolio";
 
-interface BuilderProps {
+interface PortfolioEditorProps {
   userId: string;
 }
 
-const emptySocial = (): SocialLinks => ({ website: "", linkedin: "", github: "" });
+const emptySocial = (): SocialLinks => ({
+  website: "",
+  linkedin: "",
+  github: "",
+  aboutTitle: "",
+  aboutText: "",
+  seoTitle: "",
+  seoDescription: "",
+  seoOgImageUrl: "",
+});
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
 const MAX_CV_SIZE_MB = 2;
@@ -52,8 +64,11 @@ const ALLOWED_CV_TYPES = [
 const MAX_VIDEO_SIZE_MB = 25;
 const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 
-const Builder = ({ userId }: BuilderProps) => {
+const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
   const navigate = useNavigate();
+  const isCreate = Boolean(useMatch("/app/new"));
+  const { slug: slugParam } = useParams<{ slug: string }>();
+  const lastLoadedSlugRef = useRef<string | null>(null);
   const { refresh } = useAuth();
   const [editingId, setEditingId] = useState<string | null>(null);
   const slugDirtyRef = useRef(false);
@@ -72,25 +87,19 @@ const Builder = ({ userId }: BuilderProps) => {
   const [customDomainVerifyToken, setCustomDomainVerifyToken] = useState("");
   const [social, setSocial] = useState<SocialLinks>(emptySocial);
   const [slug, setSlug] = useState("");
-  const [projects, setProjects] = useState<PortfolioProject[]>([createProject()]);
+  const [projects, setProjects] = useState<PortfolioProject[]>([]);
   const [recent, setRecent] = useState<PortfolioRecord[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-  const [sidebarStats, setSidebarStats] = useState<{ views: number; clicks: number } | null>(null);
   const [billing, setBilling] = useState<BillingStatus | null>(null);
 
-  const reloadList = useCallback(() => {
+  useEffect(() => {
     setListLoading(true);
     listPortfoliosByUser(userId)
       .then(setRecent)
       .catch(() => setRecent([]))
       .finally(() => setListLoading(false));
   }, [userId]);
-
-  useEffect(() => {
-    reloadList();
-  }, [reloadList]);
 
   useEffect(() => {
     if (!hasApi) return;
@@ -120,16 +129,6 @@ const Builder = ({ userId }: BuilderProps) => {
     }
   }, [suggestedSlug, editingId]);
 
-  useEffect(() => {
-    if (!selectedSlug || !billing?.limits.analytics) {
-      setSidebarStats(null);
-      return;
-    }
-    getPortfolioAnalytics(selectedSlug).then((a) =>
-      setSidebarStats({ views: a.views, clicks: a.projectClicks }),
-    );
-  }, [selectedSlug, billing?.limits.analytics]);
-
   const resetForm = () => {
     setEditingId(null);
     slugDirtyRef.current = false;
@@ -146,11 +145,10 @@ const Builder = ({ userId }: BuilderProps) => {
     setCustomDomainVerified(false);
     setCustomDomainVerifyToken("");
     setSocial(emptySocial());
-    setProjects([createProject()]);
-    setSelectedSlug(null);
+    setProjects([]);
   };
 
-  const loadPortfolio = (p: PortfolioRecord) => {
+  const loadPortfolio = (p: PortfolioRecord, opts?: { silent?: boolean }) => {
     setEditingId(p.id);
     slugDirtyRef.current = true;
     setFullName(p.fullName);
@@ -169,12 +167,38 @@ const Builder = ({ userId }: BuilderProps) => {
       website: p.socialLinks?.website ?? "",
       linkedin: p.socialLinks?.linkedin ?? "",
       github: p.socialLinks?.github ?? "",
+      aboutTitle: p.socialLinks?.aboutTitle ?? "",
+      aboutText: p.socialLinks?.aboutText ?? "",
+      seoTitle: p.socialLinks?.seoTitle ?? "",
+      seoDescription: p.socialLinks?.seoDescription ?? "",
+      seoOgImageUrl: p.socialLinks?.seoOgImageUrl ?? "",
     });
     setSlug(p.slug);
-    setProjects(p.projects.length ? p.projects : [createProject()]);
-    setSelectedSlug(p.slug);
-    toast.info("Loaded for editing", { description: `You are editing “${p.slug}”.` });
+    setProjects(p.projects.length ? p.projects : []);
+    if (!opts?.silent) {
+      toast.info("Loaded for editing", { description: `You are editing “${p.slug}”.` });
+    }
   };
+
+  useEffect(() => {
+    if (isCreate) {
+      lastLoadedSlugRef.current = null;
+      resetForm();
+    }
+  }, [isCreate]);
+
+  useEffect(() => {
+    if (isCreate || !slugParam || listLoading) return;
+    const p = recent.find((x) => x.slug === slugParam);
+    if (!p) {
+      toast.error("Portfolio not found.");
+      navigate("/app", { replace: true });
+      return;
+    }
+    if (lastLoadedSlugRef.current === slugParam) return;
+    lastLoadedSlugRef.current = slugParam;
+    loadPortfolio(p, { silent: true });
+  }, [isCreate, slugParam, listLoading, recent, navigate]);
 
   const updateProject = (id: string, key: keyof PortfolioProject, value: string) => {
     setProjects((prev) => prev.map((project) => (project.id === id ? { ...project, [key]: value } : project)));
@@ -299,6 +323,11 @@ const Builder = ({ userId }: BuilderProps) => {
     if (social.website?.trim()) socialClean.website = social.website.trim();
     if (social.linkedin?.trim()) socialClean.linkedin = social.linkedin.trim();
     if (social.github?.trim()) socialClean.github = social.github.trim();
+    if (social.aboutTitle?.trim()) socialClean.aboutTitle = social.aboutTitle.trim();
+    if (social.aboutText?.trim()) socialClean.aboutText = social.aboutText.trim();
+    if (social.seoTitle?.trim()) socialClean.seoTitle = social.seoTitle.trim();
+    if (social.seoDescription?.trim()) socialClean.seoDescription = social.seoDescription.trim();
+    if (social.seoOgImageUrl?.trim()) socialClean.seoOgImageUrl = social.seoOgImageUrl.trim();
 
     const item: PortfolioData = {
       id: editingId ?? randomId(),
@@ -324,7 +353,6 @@ const Builder = ({ userId }: BuilderProps) => {
     try {
       await upsertPortfolio({ ...item, user_id: userId });
       toast.success(editingId ? "Portfolio updated" : "Portfolio published");
-      reloadList();
       navigate(`/portfolio/${item.slug}`);
     } catch (e: unknown) {
       const err = e as Error & { code?: string; status?: number };
@@ -341,19 +369,46 @@ const Builder = ({ userId }: BuilderProps) => {
     }
   };
 
+  const showEditLoader = !isCreate && Boolean(slugParam) && listLoading;
+
+  if (showEditLoader) {
+    return (
+      <div className="flex min-h-screen flex-col bg-background">
+        <SiteHeader />
+        <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6">
+          <div className="h-10 w-10 animate-pulse rounded-full border-2 border-primary/30 border-t-primary" />
+          <p className="text-sm text-muted-foreground">Loading portfolio…</p>
+        </div>
+        <SiteFooter />
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <div className="relative flex-1 overflow-x-hidden px-5 pb-20 pt-8 md:px-10">
         <div className="pointer-events-none fixed inset-0 -z-20 bg-[radial-gradient(ellipse_70%_40%_at_20%_0%,hsl(var(--primary)/0.12),transparent_65%),radial-gradient(ellipse_50%_30%_at_90%_20%,hsl(var(--accent)/0.1),transparent_60%)]" />
 
-        <div className="mx-auto mb-8 max-w-7xl">
-          <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary">Dashboard</p>
+        <div className="mx-auto mb-8 max-w-5xl">
+          <p className="text-xs font-medium uppercase tracking-[0.2em] text-primary">
+            {isCreate ? "Create portfolio" : "Edit portfolio"}
+          </p>
           <h1 className="mt-2 font-display text-3xl font-bold md:text-4xl">
-            Shape your <span className="text-gradient">public portfolio</span>
+            {isCreate ? (
+              <>
+                Start a <span className="text-gradient">new portfolio</span>
+              </>
+            ) : (
+              <>
+                Update your <span className="text-gradient">public page</span>
+              </>
+            )}
           </h1>
           <p className="mt-2 max-w-2xl text-muted-foreground">
-            One polished page for recruiters and clients: profile, projects, and a stable URL you own.
+            {isCreate
+              ? "Add your profile, projects, and URL — then publish when you are ready."
+              : "Changes apply to your live page after you save."}
           </p>
           {hasApi && billing ? (
             <div className="mt-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-muted-foreground">
@@ -389,7 +444,7 @@ const Builder = ({ userId }: BuilderProps) => {
           ) : null}
         </div>
 
-        <div className="mx-auto grid w-full max-w-7xl gap-8 lg:grid-cols-[1.15fr_0.85fr]">
+        <div className="mx-auto w-full max-w-5xl">
           <motion.form
             onSubmit={handleSubmit}
             className="glass-frosted rounded-[1.75rem] p-6 md:p-10"
@@ -409,14 +464,13 @@ const Builder = ({ userId }: BuilderProps) => {
                 </div>
               </div>
               <div className="flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={resetForm}
+                <Link
+                  to="/app"
                   className="glass-subtle inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm"
                 >
-                  <RotateCcw className="h-4 w-4" />
-                  New
-                </button>
+                  <ArrowLeft className="h-4 w-4" />
+                  Dashboard
+                </Link>
                 <button
                   type="button"
                   onClick={async () => {
@@ -431,9 +485,12 @@ const Builder = ({ userId }: BuilderProps) => {
               </div>
             </div>
 
-            <div className="mt-10 space-y-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Profile</h3>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="mt-8 grid gap-8 xl:grid-cols-2 xl:items-start">
+              <div className="flex min-w-0 flex-col gap-6">
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-5 md:p-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">Profile</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Name, photo, and story visitors see first.</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-xs text-muted-foreground">Full name</label>
                   <input
@@ -537,11 +594,39 @@ const Builder = ({ userId }: BuilderProps) => {
                   className="glass-subtle min-h-28 w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary"
                 />
               </div>
-            </div>
+                </div>
 
-            <div className="mt-10 space-y-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Publishing</h3>
-              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-5 md:p-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">Who I am (public)</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Copy for the block under your hero on the live page.</p>
+                  <div className="mt-4 grid gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs text-muted-foreground">Section title</label>
+                  <input
+                    value={social.aboutTitle ?? ""}
+                    onChange={(e) => setSocial((s) => ({ ...s, aboutTitle: e.target.value }))}
+                    placeholder="Design with purpose and personality"
+                    className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs text-muted-foreground">Section text</label>
+                  <textarea
+                    value={social.aboutText ?? ""}
+                    onChange={(e) => setSocial((s) => ({ ...s, aboutText: e.target.value }))}
+                    placeholder="Write a short intro about your style, strengths, and who you help."
+                    className="glass-subtle min-h-24 w-full rounded-xl border border-white/10 bg-transparent p-3 text-sm outline-none focus:border-primary"
+                  />
+                </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex min-w-0 flex-col gap-6">
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-5 md:p-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">Page address &amp; look</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Your public URL and visual theme.</p>
+                  <div className="mt-4 grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-xs text-muted-foreground">Public URL slug</label>
                   <input
@@ -578,111 +663,154 @@ const Builder = ({ userId }: BuilderProps) => {
                     <p className="mt-1 text-xs text-muted-foreground">Premium themes require Basic or Premium.</p>
                   ) : null}
                 </div>
-                <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs text-muted-foreground">Custom domain (optional)</label>
-                  <input
-                    value={customDomain}
-                    onChange={(e) => {
-                      setCustomDomain(e.target.value);
-                      setCustomDomainVerified(false);
-                    }}
-                    placeholder="portfolio.yourdomain.com"
-                    disabled={Boolean(billing && !billing.limits.customDomain)}
-                    className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {billing && !billing.limits.customDomain
-                      ? "Custom domain is a Premium feature — upgrade on the Plans page."
-                      : "Simple setup: save, add 2 DNS records, then click Verify."}
-                  </p>
-                  {billing?.limits.customDomain && customDomain ? (
-                    <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs text-muted-foreground">
-                      <p>
-                        Status:{" "}
-                        <span className={customDomainVerified ? "text-emerald-400" : "text-amber-400"}>
-                          {customDomainVerified ? "Verified" : "Not verified"}
-                        </span>
-                      </p>
-                      {customDomainVerifyToken ? (
-                        <>
-                          <p className="mt-2">Step 1: Point your domain to PortfolioForge</p>
-                          <div className="mt-1 rounded-lg border border-white/10 p-2">
-                            <p>CNAME (or ALIAS) target:</p>
-                            <div className="mt-1 flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-foreground">cname.vercel-dns.com</span>
-                              <button
-                                type="button"
-                                className="text-primary underline"
-                                onClick={() => {
-                                  void navigator.clipboard.writeText("cname.vercel-dns.com");
-                                  toast.success("CNAME target copied");
-                                }}
-                              >
-                                Copy
-                              </button>
-                            </div>
-                          </div>
-
-                          <p className="mt-3">Step 2: Add TXT verification record</p>
-                          <div className="mt-1 rounded-lg border border-white/10 p-2">
-                            <p>Host</p>
-                            <div className="mt-1 flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-foreground">_pf-verify.{customDomain}</span>
-                              <button
-                                type="button"
-                                className="text-primary underline"
-                                onClick={() => {
-                                  void navigator.clipboard.writeText(`_pf-verify.${customDomain}`);
-                                  toast.success("TXT host copied");
-                                }}
-                              >
-                                Copy
-                              </button>
-                            </div>
-                            <p className="mt-2">Value</p>
-                            <div className="mt-1 flex flex-wrap items-center gap-2">
-                              <span className="font-mono text-foreground">{customDomainVerifyToken}</span>
-                              <button
-                                type="button"
-                                className="text-primary underline"
-                                onClick={() => {
-                                  void navigator.clipboard.writeText(customDomainVerifyToken);
-                                  toast.success("TXT value copied");
-                                }}
-                              >
-                                Copy
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <p className="mt-2">Save this portfolio first to generate your DNS verification token.</p>
-                      )}
-                      <button
-                        type="button"
-                        disabled={!customDomainVerifyToken || !editingId}
-                        onClick={async () => {
-                          const result = await verifyCustomDomain(slug);
-                          if (result.verified) {
-                            setCustomDomainVerified(true);
-                            toast.success(result.message);
-                          } else {
-                            toast.error(result.message);
-                          }
-                        }}
-                        className="glass-subtle mt-3 rounded-full px-3 py-1.5 text-xs disabled:opacity-50"
-                      >
-                        Verify domain
-                      </button>
-                    </div>
-                  ) : null}
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="mt-10 space-y-2">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Links</h3>
-              <div className="mt-4 grid gap-4 md:grid-cols-3">
+                <Accordion type="multiple" className="w-full rounded-2xl border border-white/10 bg-white/[0.02] px-2">
+                  <AccordionItem value="domain" className="border-white/10 px-2">
+                    <AccordionTrigger className="py-3 text-sm hover:no-underline">Custom domain (Premium)</AccordionTrigger>
+                    <AccordionContent>
+                      <label className="mb-1.5 block text-xs text-muted-foreground">Your domain</label>
+                      <input
+                        value={customDomain}
+                        onChange={(e) => {
+                          setCustomDomain(e.target.value);
+                          setCustomDomainVerified(false);
+                        }}
+                        placeholder="portfolio.yourdomain.com"
+                        disabled={Boolean(billing && !billing.limits.customDomain)}
+                        className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
+                      />
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {billing && !billing.limits.customDomain
+                          ? "Custom domain is a Premium feature — upgrade on the Plans page."
+                          : "Save once, then add DNS records and verify."}
+                      </p>
+                      {billing?.limits.customDomain && customDomain ? (
+                        <div className="mt-3 rounded-xl border border-white/10 bg-white/[0.02] p-3 text-xs text-muted-foreground">
+                          <p>
+                            Status:{" "}
+                            <span className={customDomainVerified ? "text-emerald-400" : "text-amber-400"}>
+                              {customDomainVerified ? "Verified" : "Not verified"}
+                            </span>
+                          </p>
+                          {customDomainVerifyToken ? (
+                            <>
+                              <p className="mt-2">Step 1: Point your domain to PortfolioForge</p>
+                              <div className="mt-1 rounded-lg border border-white/10 p-2">
+                                <p>CNAME (or ALIAS) target:</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  <span className="font-mono text-foreground">cname.vercel-dns.com</span>
+                                  <button
+                                    type="button"
+                                    className="text-primary underline"
+                                    onClick={() => {
+                                      void navigator.clipboard.writeText("cname.vercel-dns.com");
+                                      toast.success("CNAME target copied");
+                                    }}
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+
+                              <p className="mt-3">Step 2: Add TXT verification record</p>
+                              <div className="mt-1 rounded-lg border border-white/10 p-2">
+                                <p>Host</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  <span className="font-mono text-foreground">_pf-verify.{customDomain}</span>
+                                  <button
+                                    type="button"
+                                    className="text-primary underline"
+                                    onClick={() => {
+                                      void navigator.clipboard.writeText(`_pf-verify.${customDomain}`);
+                                      toast.success("TXT host copied");
+                                    }}
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                                <p className="mt-2">Value</p>
+                                <div className="mt-1 flex flex-wrap items-center gap-2">
+                                  <span className="font-mono text-foreground">{customDomainVerifyToken}</span>
+                                  <button
+                                    type="button"
+                                    className="text-primary underline"
+                                    onClick={() => {
+                                      void navigator.clipboard.writeText(customDomainVerifyToken);
+                                      toast.success("TXT value copied");
+                                    }}
+                                  >
+                                    Copy
+                                  </button>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="mt-2">Save this portfolio first to generate your DNS verification token.</p>
+                          )}
+                          <button
+                            type="button"
+                            disabled={!customDomainVerifyToken || !editingId}
+                            onClick={async () => {
+                              const result = await verifyCustomDomain(slug);
+                              if (result.verified) {
+                                setCustomDomainVerified(true);
+                                toast.success(result.message);
+                              } else {
+                                toast.error(result.message);
+                              }
+                            }}
+                            className="glass-subtle mt-3 rounded-full px-3 py-1.5 text-xs disabled:opacity-50"
+                          >
+                            Verify domain
+                          </button>
+                        </div>
+                      ) : null}
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="previews" className="border-0 px-2">
+                    <AccordionTrigger className="py-3 text-sm hover:no-underline">Link previews (Google &amp; social)</AccordionTrigger>
+                    <AccordionContent>
+                      <p className="text-xs text-muted-foreground">
+                        When someone pastes your portfolio link in Slack, LinkedIn, iMessage, etc., these fields control the title, short description, and preview image. Leave blank to use your profile defaults. For the image, paste a public{" "}
+                        <span className="text-foreground/90">https://</span> URL (uploaded images in the editor are not used for previews).
+                      </p>
+                      <div className="mt-3 grid gap-3 md:grid-cols-2">
+                        <div>
+                          <label className="mb-1 block text-xs text-muted-foreground">Page title override</label>
+                          <input
+                            value={social.seoTitle ?? ""}
+                            onChange={(e) => setSocial((s) => ({ ...s, seoTitle: e.target.value }))}
+                            placeholder={`${fullName || "Name"} · ${headline || "Headline"}`}
+                            className="glass-subtle w-full rounded-lg border border-white/10 bg-transparent p-2.5 text-sm outline-none focus:border-primary"
+                          />
+                        </div>
+                        <div>
+                          <label className="mb-1 block text-xs text-muted-foreground">Share image URL (https)</label>
+                          <input
+                            value={social.seoOgImageUrl ?? ""}
+                            onChange={(e) => setSocial((s) => ({ ...s, seoOgImageUrl: e.target.value }))}
+                            placeholder="https://…/og.jpg"
+                            className="glass-subtle w-full rounded-lg border border-white/10 bg-transparent p-2.5 text-sm outline-none focus:border-primary"
+                          />
+                        </div>
+                      </div>
+                      <label className="mt-3 block text-xs text-muted-foreground">Meta description</label>
+                      <textarea
+                        value={social.seoDescription ?? ""}
+                        onChange={(e) => setSocial((s) => ({ ...s, seoDescription: e.target.value }))}
+                        placeholder="One or two sentences. Defaults to your bio if empty."
+                        className="glass-subtle mt-1 min-h-16 w-full rounded-lg border border-white/10 bg-transparent p-2.5 text-sm outline-none focus:border-primary"
+                      />
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
+
+                <div className="rounded-2xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-transparent p-5 md:p-6">
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">Social links</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">Shown as buttons on your public page.</p>
+                  <div className="mt-4 grid gap-4 sm:grid-cols-3">
                 <div>
                   <label className="mb-1.5 block text-xs text-muted-foreground">Website</label>
                   <input
@@ -711,21 +839,40 @@ const Builder = ({ userId }: BuilderProps) => {
                   />
                 </div>
               </div>
+                </div>
+              </div>
             </div>
 
-            <div className="mt-10 space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Projects</h3>
-                <button type="button" onClick={addProject} className="glass-pill inline-flex items-center gap-2 rounded-full px-4 py-2 text-sm">
+            <div className="mt-10 rounded-2xl border border-white/10 bg-gradient-to-br from-primary/[0.07] via-transparent to-accent/[0.05] p-5 md:p-8">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-semibold uppercase tracking-wider text-primary">Projects</h3>
+                  <p className="mt-1 max-w-xl text-xs text-muted-foreground">
+                    Case studies appear on your public page. Project blocks stay hidden until you add one — use{" "}
+                    <span className="text-foreground/90">Add project</span>, and remove any block you do not need.
+                  </p>
+                </div>
+                <button type="button" onClick={addProject} className="glass-pill inline-flex shrink-0 items-center gap-2 rounded-full px-4 py-2 text-sm">
                   <Plus className="h-4 w-4" />
                   Add project
                 </button>
               </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                Required per project: <span className="text-foreground/90">title</span> and{" "}
-                <span className="text-foreground/90">summary</span>. Role, link, tags, and image are optional.
+              <p className="mt-3 text-xs text-muted-foreground">
+                Each project needs a <span className="text-foreground/90">title</span> and <span className="text-foreground/90">summary</span>. Everything else is optional.
               </p>
-              <div className="mt-4 space-y-4">
+              {projects.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center justify-center rounded-xl border border-dashed border-white/20 bg-black/15 py-14 text-center">
+                  <p className="text-sm font-medium text-foreground/90">No project blocks yet</p>
+                  <p className="mt-2 max-w-sm text-xs text-muted-foreground">
+                    Click &quot;Add project&quot; to open a form. You can delete a project block anytime with the button on the card.
+                  </p>
+                  <button type="button" onClick={addProject} className="glass-pill mt-5 inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium">
+                    <Plus className="h-4 w-4" />
+                    Add your first project
+                  </button>
+                </div>
+              ) : (
+              <div className="mt-6 space-y-4">
                 {projects.map((project, idx) => (
                   <div key={project.id} className="glass-card rounded-2xl p-4 md:p-5">
                     <div className="mb-3 flex items-center justify-between">
@@ -733,9 +880,9 @@ const Builder = ({ userId }: BuilderProps) => {
                       <button
                         type="button"
                         onClick={() => removeProject(project.id)}
-                        className="text-xs text-muted-foreground hover:text-foreground"
+                        className="text-xs text-muted-foreground hover:text-destructive"
                       >
-                        Remove
+                        Delete
                       </button>
                     </div>
                     <div className="grid gap-3 md:grid-cols-2">
@@ -755,9 +902,39 @@ const Builder = ({ userId }: BuilderProps) => {
                     <textarea
                       value={project.summary}
                       onChange={(e) => updateProject(project.id, "summary", e.target.value)}
-                      placeholder="Outcome-focused summary: problem, what you did, measurable result."
+                      placeholder="Overview: context, what you shipped, and the narrative arc."
                       className="glass-subtle mt-3 min-h-20 w-full rounded-lg border border-white/10 bg-transparent p-2.5 outline-none focus:border-primary"
                     />
+                    <p className="mt-3 text-xs font-medium text-muted-foreground">Case study (optional)</p>
+                    <div className="mt-2 grid gap-3 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs text-muted-foreground">Challenge</label>
+                        <textarea
+                          value={project.problem ?? ""}
+                          onChange={(e) => updateProject(project.id, "problem", e.target.value)}
+                          placeholder="Problem or constraint"
+                          className="glass-subtle min-h-[4.5rem] w-full rounded-lg border border-white/10 bg-transparent p-2.5 text-sm outline-none focus:border-primary"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-muted-foreground">Outcome</label>
+                        <textarea
+                          value={project.outcome ?? ""}
+                          onChange={(e) => updateProject(project.id, "outcome", e.target.value)}
+                          placeholder="Measurable result or impact"
+                          className="glass-subtle min-h-[4.5rem] w-full rounded-lg border border-white/10 bg-transparent p-2.5 text-sm outline-none focus:border-primary"
+                        />
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <label className="mb-1 block text-xs text-muted-foreground">Tools &amp; stack</label>
+                      <input
+                        value={project.stack ?? ""}
+                        onChange={(e) => updateProject(project.id, "stack", e.target.value)}
+                        placeholder="Figma, React, Node — comma separated"
+                        className="glass-subtle w-full rounded-lg border border-white/10 bg-transparent p-2.5 text-sm outline-none focus:border-primary"
+                      />
+                    </div>
                     <div className="mt-3 grid gap-3 md:grid-cols-2">
                       <input
                         value={project.link}
@@ -848,6 +1025,7 @@ const Builder = ({ userId }: BuilderProps) => {
                   </div>
                 ))}
               </div>
+              )}
             </div>
 
             <div className="mt-8 flex flex-wrap items-center gap-4">
@@ -860,93 +1038,6 @@ const Builder = ({ userId }: BuilderProps) => {
               </button>
             </div>
           </motion.form>
-
-          <motion.aside
-            className="glass-card h-fit rounded-[1.75rem] p-6 md:p-8"
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-          >
-            <h2 className="font-display text-xl font-semibold">Your portfolios</h2>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              Open a published page to share, or load one here to edit. Analytics reflect visits and outbound project clicks.
-            </p>
-            <div className="mt-6 space-y-3">
-              {listLoading ? (
-                <p className="text-sm text-muted-foreground">Loading…</p>
-              ) : recent.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No portfolios yet — publish your first on the left.</p>
-              ) : (
-                recent.slice(0, 12).map((item) => (
-                  <div
-                    key={item.id}
-                    className={`rounded-xl border p-3 transition-colors ${
-                      selectedSlug === item.slug ? "border-primary/50 bg-primary/5" : "border-white/10 bg-transparent"
-                    }`}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => {
-                        loadPortfolio(item);
-                      }}
-                      className="w-full text-left"
-                    >
-                      <p className="font-medium">{item.fullName}</p>
-                      <p className="text-xs text-muted-foreground">{item.headline}</p>
-                      <p className="mt-1 font-mono text-xs text-primary">/portfolio/{item.slug}</p>
-                    </button>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Link
-                        to={`/portfolio/${item.slug}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="glass-subtle inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs"
-                      >
-                        Open <ExternalLink className="h-3 w-3" />
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          const ok = window.confirm(`Delete portfolio "${item.slug}"? This cannot be undone.`);
-                          if (!ok) return;
-                          try {
-                            await deletePortfolio(item.id);
-                            if (editingId === item.id) resetForm();
-                            reloadList();
-                            toast.success("Portfolio deleted");
-                          } catch (e) {
-                            const msg = e instanceof Error ? e.message : "Could not delete portfolio";
-                            toast.error(msg);
-                          }
-                        }}
-                        className="inline-flex items-center gap-1 rounded-full border border-destructive/40 px-3 py-1 text-xs text-destructive hover:bg-destructive/10"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                        Delete
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-            {selectedSlug && billing && !billing.limits.analytics ? (
-              <div className="mt-6 rounded-xl border border-dashed border-white/15 p-4 text-sm text-muted-foreground">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">Analytics</p>
-                <p className="mt-2">Included with Basic and Premium.</p>
-                <Link to="/billing" className="mt-2 inline-block text-xs text-primary hover:underline">
-                  View plans →
-                </Link>
-              </div>
-            ) : null}
-            {selectedSlug && sidebarStats && billing?.limits.analytics ? (
-              <div className="mt-6 rounded-xl border border-white/10 p-4 text-sm">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground">Analytics · {selectedSlug}</p>
-                <p className="mt-2 text-muted-foreground">
-                  <span className="text-foreground font-semibold">{sidebarStats.views}</span> views ·{" "}
-                  <span className="text-foreground font-semibold">{sidebarStats.clicks}</span> project clicks
-                </p>
-              </div>
-            ) : null}
-          </motion.aside>
         </div>
       </div>
       <SiteFooter />
@@ -954,4 +1045,4 @@ const Builder = ({ userId }: BuilderProps) => {
   );
 };
 
-export default Builder;
+export default PortfolioEditor;

@@ -4,7 +4,14 @@ export interface PortfolioProject {
   id: string;
   title: string;
   role: string;
+  /** Short overview / narrative (shown as main body copy). */
   summary: string;
+  /** Challenge / context — optional case-study block. */
+  problem?: string;
+  /** Results / metrics — optional case-study block. */
+  outcome?: string;
+  /** Tools & stack (comma-separated), shown separately from tags. */
+  stack?: string;
   link: string;
   tags: string;
   imageUrls?: string[];
@@ -17,6 +24,12 @@ export interface SocialLinks {
   website?: string;
   linkedin?: string;
   github?: string;
+  aboutTitle?: string;
+  aboutText?: string;
+  /** Page title / meta for link previews (stored in social_links JSON on API). */
+  seoTitle?: string;
+  seoDescription?: string;
+  seoOgImageUrl?: string;
 }
 
 export interface PortfolioData {

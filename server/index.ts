@@ -151,6 +151,18 @@ async function ensureBillingSchema(): Promise<void> {
     ADD COLUMN IF NOT EXISTS billing_tier text NOT NULL DEFAULT 'free'
   `);
   await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS full_name text NOT NULL DEFAULT ''
+  `);
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS company text NOT NULL DEFAULT ''
+  `);
+  await pool.query(`
+    ALTER TABLE users
+    ADD COLUMN IF NOT EXISTS avatar_url text NOT NULL DEFAULT ''
+  `);
+  await pool.query(`
     ALTER TABLE portfolios
     ADD COLUMN IF NOT EXISTS profile_image_url text NOT NULL DEFAULT ''
   `);
@@ -174,6 +186,32 @@ async function ensureBillingSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_portfolios_custom_domain
     ON portfolios(custom_domain)
   `);
+  await ensurePortfolioAnalyticsFkOnUpdateCascade();
+}
+
+/** Slug renames update portfolios.slug; analytics rows must follow or PostgreSQL raises FK errors (500 / process crash). */
+async function ensurePortfolioAnalyticsFkOnUpdateCascade(): Promise<void> {
+  const { rows } = await pool.query<{ conname: string; def: string }>(
+    `SELECT c.conname, pg_get_constraintdef(c.oid) AS def
+     FROM pg_constraint c
+     INNER JOIN pg_class rel ON rel.oid = c.conrelid
+     INNER JOIN pg_class ref ON ref.oid = c.confrelid
+     WHERE rel.relname = 'portfolio_analytics'
+       AND ref.relname = 'portfolios'
+       AND c.contype = 'f'`,
+  );
+  if (rows.length === 0) return;
+  const fk = rows.find((r) => r.def.includes("portfolio_slug")) ?? rows[0];
+  if (fk.def.toLowerCase().includes("on update cascade")) return;
+
+  const q = (name: string) => `"${name.replace(/"/g, '""')}"`;
+  await pool.query(`ALTER TABLE portfolio_analytics DROP CONSTRAINT ${q(fk.conname)}`);
+  await pool.query(`
+    ALTER TABLE portfolio_analytics
+      ADD CONSTRAINT portfolio_analytics_portfolio_slug_fkey
+      FOREIGN KEY (portfolio_slug) REFERENCES portfolios (slug) ON DELETE CASCADE ON UPDATE CASCADE
+  `);
+  console.log("Migrated portfolio_analytics FK: added ON UPDATE CASCADE for portfolio_slug.");
 }
 
 type JwtPayload = { userId: string; email: string };
@@ -292,7 +330,16 @@ app.post("/auth/signup", authLimiter, async (req, res) => {
     const user = rows[0];
     const token = signToken({ userId: user.id, email: user.email });
     res.cookie(COOKIE, token, cookieOpts);
-    res.json({ user: { id: user.id, email: user.email, billingTier: "free" } });
+    res.json({
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: "",
+        company: "",
+        avatarUrl: "",
+        billingTier: "free",
+      },
+    });
   } catch (e: unknown) {
     const err = e as { code?: string };
     if (err.code === "23505") {
@@ -316,7 +363,10 @@ app.post("/auth/login", authLimiter, async (req, res) => {
       email: string;
       password_hash: string;
       billing_tier: string;
-    }>(`SELECT id, email, password_hash, billing_tier FROM users WHERE email = $1`, [
+      full_name: string;
+      company: string;
+      avatar_url: string;
+    }>(`SELECT id, email, password_hash, billing_tier, full_name, company, avatar_url FROM users WHERE email = $1`, [
       email.trim().toLowerCase(),
     ]);
     const user = rows[0];
@@ -327,7 +377,14 @@ app.post("/auth/login", authLimiter, async (req, res) => {
     const token = signToken({ userId: user.id, email: user.email });
     res.cookie(COOKIE, token, cookieOpts);
     res.json({
-      user: { id: user.id, email: user.email, billingTier: normalizeTier(user.billing_tier) },
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.full_name ?? "",
+        company: user.company ?? "",
+        avatarUrl: user.avatar_url ?? "",
+        billingTier: normalizeTier(user.billing_tier),
+      },
     });
   } catch (e) {
     console.error("auth/login", e);
@@ -348,8 +405,15 @@ app.get("/auth/me", async (req, res) => {
   }
   try {
     const decoded = jwt.verify(token, JWT_SECRET) as unknown as JwtPayload;
-    const { rows } = await pool.query<{ id: string; email: string; billing_tier: string }>(
-      `SELECT id, email, billing_tier FROM users WHERE id = $1`,
+    const { rows } = await pool.query<{
+      id: string;
+      email: string;
+      billing_tier: string;
+      full_name: string;
+      company: string;
+      avatar_url: string;
+    }>(
+      `SELECT id, email, billing_tier, full_name, company, avatar_url FROM users WHERE id = $1`,
       [decoded.userId],
     );
     const row = rows[0];
@@ -360,11 +424,55 @@ app.get("/auth/me", async (req, res) => {
     res.json({
       id: row.id,
       email: row.email,
+      fullName: row.full_name ?? "",
+      company: row.company ?? "",
+      avatarUrl: row.avatar_url ?? "",
       billingTier: normalizeTier(row.billing_tier),
     });
   } catch {
     res.status(401).json({ message: "Invalid session" });
   }
+});
+
+app.patch("/auth/profile", authMiddleware, async (req, res) => {
+  const userId = (req as express.Request & { userId: string }).userId;
+  const { fullName, company, avatarUrl } = req.body as {
+    fullName?: string;
+    company?: string;
+    avatarUrl?: string;
+  };
+  const safeFullName = (fullName ?? "").trim().slice(0, 120);
+  const safeCompany = (company ?? "").trim().slice(0, 120);
+  const safeAvatarUrl = (avatarUrl ?? "").trim();
+  if (safeAvatarUrl.length > 1_500_000) {
+    res.status(400).json({ message: "Avatar image is too large" });
+    return;
+  }
+  const { rows } = await pool.query<{
+    id: string;
+    email: string;
+    billing_tier: string;
+    full_name: string;
+    company: string;
+    avatar_url: string;
+  }>(
+    `UPDATE users
+     SET full_name = $2, company = $3, avatar_url = $4
+     WHERE id = $1
+     RETURNING id, email, billing_tier, full_name, company, avatar_url`,
+    [userId, safeFullName, safeCompany, safeAvatarUrl],
+  );
+  const row = rows[0];
+  res.json({
+    user: {
+      id: row.id,
+      email: row.email,
+      fullName: row.full_name ?? "",
+      company: row.company ?? "",
+      avatarUrl: row.avatar_url ?? "",
+      billingTier: normalizeTier(row.billing_tier),
+    },
+  });
 });
 
 app.get("/billing/plans", (_req, res) => {
@@ -549,7 +657,8 @@ app.post("/domains/verify", authMiddleware, async (req, res) => {
   res.json({ verified: true, message: "Domain verified." });
 });
 
-app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
+app.post("/portfolios/upsert", authMiddleware, async (req, res, next) => {
+  try {
   const userId = (req as express.Request & { userId: string }).userId;
   const body = req.body as {
     id?: string;
@@ -573,21 +682,44 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
     return;
   }
 
-  const existing = await pool.query<{
-    user_id: string;
-    custom_domain: string;
-    custom_domain_verified: boolean;
-    custom_domain_verify_token: string;
-  }>(`SELECT user_id, custom_domain, custom_domain_verified, custom_domain_verify_token FROM portfolios WHERE slug = $1`, [body.slug]);
+  const slugTrim = body.slug.trim();
+  const isUuid = (s: string) => /^[0-9a-f-]{36}$/i.test(s);
 
-  if (existing.rows[0] && existing.rows[0].user_id !== userId) {
+  let rowById: DbPortfolio | undefined;
+  if (body.id && isUuid(body.id)) {
+    const r = await pool.query<DbPortfolio>(`SELECT * FROM portfolios WHERE id = $1 AND user_id = $2`, [
+      body.id,
+      userId,
+    ]);
+    rowById = r.rows[0];
+  }
+
+  const slugOwner = await pool.query<{ id: string; user_id: string }>(
+    `SELECT id, user_id FROM portfolios WHERE slug = $1`,
+    [slugTrim],
+  );
+  const slugRow = slugOwner.rows[0];
+  if (slugRow && slugRow.user_id !== userId) {
+    res.status(403).json({ message: "This slug is taken" });
+    return;
+  }
+  if (slugRow && rowById && slugRow.id !== rowById.id) {
     res.status(403).json({ message: "This slug is taken" });
     return;
   }
 
+  /** Same slug as an existing row but client omitted id — treat as update. */
+  if (!rowById && slugRow && slugRow.user_id === userId) {
+    const r = await pool.query<DbPortfolio>(`SELECT * FROM portfolios WHERE id = $1 AND user_id = $2`, [
+      slugRow.id,
+      userId,
+    ]);
+    rowById = r.rows[0];
+  }
+
   const tier = await getUserTier(pool, userId);
   const portfolioCount = await countUserPortfolios(pool, userId);
-  const isNewPortfolio = !existing.rows[0];
+  const isNewPortfolio = !rowById;
   const gate = evaluatePublishGate({
     mode: getBillingMode(),
     tier,
@@ -608,13 +740,12 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
   /** Never trust the client for verification — only DNS/admin flows may set true in DB. */
   let customDomainVerified = false;
   let customDomainVerifyToken = "";
-  if (existing.rows[0]) {
-    const prevDomain = (existing.rows[0].custom_domain ?? "").trim();
-    customDomainVerified =
-      newDomain === prevDomain ? existing.rows[0].custom_domain_verified : false;
+  if (rowById) {
+    const prevDomain = (rowById.custom_domain ?? "").trim();
+    customDomainVerified = newDomain === prevDomain ? rowById.custom_domain_verified : false;
     customDomainVerifyToken =
       newDomain && newDomain === prevDomain
-        ? existing.rows[0].custom_domain_verify_token
+        ? rowById.custom_domain_verify_token
         : newDomain
           ? generateDomainVerifyToken()
           : "";
@@ -622,20 +753,21 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
     customDomainVerifyToken = generateDomainVerifyToken();
   }
 
-  const id = body.id && /^[0-9a-f-]{36}$/i.test(body.id) ? body.id : randomUUID();
+  const insertId = body.id && isUuid(body.id) ? body.id : randomUUID();
   const projectsJson = JSON.stringify(body.projects ?? []);
   const socialJson = JSON.stringify(body.socialLinks ?? {});
 
-  if (existing.rows[0]) {
+  if (rowById) {
     await pool.query(
       `UPDATE portfolios SET
+        slug = $1,
         full_name = $2, profile_image_url = $3, cv_url = $4, cv_file_name = $5, headline = $6, bio = $7, email = $8, location = $9,
         theme = $10, custom_domain = $11, custom_domain_verified = $12, custom_domain_verify_token = $13,
         social_links = $14::jsonb, projects = $15::jsonb,
         updated_at = now()
-      WHERE slug = $1 AND user_id = $16`,
+      WHERE id = $16 AND user_id = $17`,
       [
-        body.slug,
+        slugTrim,
         body.fullName,
         body.profileImageUrl ?? "",
         body.cvUrl ?? "",
@@ -650,6 +782,7 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
         customDomainVerifyToken,
         socialJson,
         projectsJson,
+        rowById.id,
         userId,
       ],
     );
@@ -660,9 +793,9 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
         custom_domain, custom_domain_verified, custom_domain_verify_token, social_links, projects
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16::jsonb, $17::jsonb)`,
       [
-        id,
+        insertId,
         userId,
-        body.slug,
+        slugTrim,
         body.fullName,
         body.profileImageUrl ?? "",
         body.cvUrl ?? "",
@@ -682,6 +815,10 @@ app.post("/portfolios/upsert", authMiddleware, async (req, res) => {
   }
 
   res.json({ ok: true });
+  } catch (err) {
+    console.error("POST /portfolios/upsert failed:", err);
+    next(err);
+  }
 });
 
 app.delete("/portfolios/:id", authMiddleware, async (req, res) => {
@@ -799,7 +936,12 @@ app.use((err: unknown, _req: express.Request, res: express.Response, next: expre
     next(err);
     return;
   }
-  res.status(500).json({ message: "Server error" });
+  const pg = err as { code?: string; detail?: string; message?: string };
+  const hint =
+    !isProd && pg?.code
+      ? `${pg.message ?? "Database error"}${pg.detail ? ` (${pg.detail})` : ""}`
+      : undefined;
+  res.status(500).json({ message: "Server error", ...(hint ? { detail: hint } : {}) });
 });
 
 async function startServer() {
