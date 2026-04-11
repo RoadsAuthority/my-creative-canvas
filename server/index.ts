@@ -60,12 +60,30 @@ function parseClientOrigins(): string[] {
     .filter(Boolean);
 }
 
+/** Same site with or without leading `www.` (e.g. apex ↔ www). */
+function sameSiteOrigin(a: string, b: string): boolean {
+  try {
+    const ua = new URL(a);
+    const ub = new URL(b);
+    if (ua.protocol !== ub.protocol) return false;
+    const ha = ua.hostname.toLowerCase();
+    const hb = ub.hostname.toLowerCase();
+    if (ha === hb) return true;
+    const strip = (h: string) => (h.startsWith("www.") ? h.slice(4) : h);
+    return strip(ha) === strip(hb);
+  } catch {
+    return false;
+  }
+}
+
 /** Allow explicit CLIENT_ORIGIN list plus typical dev URLs (LAN IP, alternate ports). */
 function isAllowedCorsOrigin(origin: string | undefined): boolean {
   if (!origin) return true;
   const allowed = parseClientOrigins();
   if (allowed.includes(origin)) return true;
-  if (isProd) return false;
+  if (isProd) {
+    return allowed.some((a) => sameSiteOrigin(a, origin));
+  }
   try {
     const u = new URL(origin);
     if (u.protocol !== "http:" && u.protocol !== "https:") return false;

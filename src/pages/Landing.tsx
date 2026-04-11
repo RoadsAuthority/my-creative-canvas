@@ -16,6 +16,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { fetchBillingPlans, type BillingPlans } from "@/lib/billing-service";
 import { basicTierCopy, freeTierCopy, premiumTierCopy, PRICING_CURRENCY } from "@/lib/pricing-data";
+import { SAMPLE_PORTFOLIO_SLUG } from "@/lib/portfolio-service";
 
 const features = [
   {
@@ -108,7 +109,7 @@ const Landing = () => {
                   <Zap className="h-4 w-4" />
                 </Link>
                 <Link
-                  to="/portfolio/demo"
+                  to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`}
                   className="glass-frosted inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-semibold"
                 >
                   View live sample
@@ -320,7 +321,7 @@ const Landing = () => {
               >
                 Get started
               </Link>
-              <Link to="/portfolio/demo" className="glass-frosted rounded-full px-8 py-3 font-semibold">
+              <Link to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`} className="glass-frosted rounded-full px-8 py-3 font-semibold">
                 Preview sample
               </Link>
             </div>

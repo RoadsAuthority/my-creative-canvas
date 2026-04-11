@@ -10,6 +10,10 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL?.trim();
 
 const apiFetch = (path: string, init?: RequestInit) =>
   fetch(`${API_BASE}${path}`, { ...init, credentials: "include" });
+
+/** Slug used for marketing “Sample” links — must match a real published portfolio when `VITE_API_BASE_URL` is set. */
+export const SAMPLE_PORTFOLIO_SLUG = "captain";
+
 const DEMO_PORTFOLIO: PortfolioRecord = {
   id: "demo",
   user_id: "demo-user",

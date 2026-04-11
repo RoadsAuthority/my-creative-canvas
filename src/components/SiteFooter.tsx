@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { SAMPLE_PORTFOLIO_SLUG } from "@/lib/portfolio-service";
 
 export function SiteFooter() {
   return (
@@ -14,7 +15,7 @@ export function SiteFooter() {
           <Link to="/auth" className="hover:text-primary">
             Create account
           </Link>
-          <Link to="/portfolio/demo" className="hover:text-primary">
+          <Link to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`} className="hover:text-primary">
             View sample
           </Link>
           <Link to="/contact" className="hover:text-primary">

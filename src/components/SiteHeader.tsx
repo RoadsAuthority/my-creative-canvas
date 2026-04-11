@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { LayoutDashboard, Plus, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { SAMPLE_PORTFOLIO_SLUG } from "@/lib/portfolio-service";
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
 
@@ -38,7 +39,7 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
                 Pricing
               </Link>
               <Link
-                to="/portfolio/demo"
+                to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`}
                 className="hidden rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground sm:inline"
               >
                 Sample
