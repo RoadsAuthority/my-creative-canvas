@@ -75,6 +75,9 @@ const THEME_OPTIONS: { value: PortfolioTheme; label: string }[] = [
   { value: "devMode", label: "Dark / Dev Mode — playful motion" },
   { value: "scrollStory", label: "Scroll story — layers & reveals" },
   { value: "atrium", label: "Atrium — night garden & aurora glass" },
+  { value: "mustard", label: "Mustard — light editorial & grid" },
+  { value: "evergreen", label: "Evergreen — forest & amber" },
+  { value: "midnightGold", label: "Midnight — charcoal & gold" },
 ];
 
 const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
