@@ -4,6 +4,7 @@ import { ArrowLeft, Copy, Plus, Sparkles, X } from "lucide-react";
 import { Link, useMatch, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { randomId } from "@/lib/id";
@@ -63,6 +64,18 @@ const ALLOWED_CV_TYPES = [
 ];
 const MAX_VIDEO_SIZE_MB = 25;
 const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+
+const THEME_OPTIONS: { value: PortfolioTheme; label: string }[] = [
+  { value: "glass", label: "Glass Pro" },
+  { value: "minimal", label: "Minimal Clean" },
+  { value: "bold", label: "Bold Contrast" },
+  { value: "vintage", label: "Vintage — warm sepia" },
+  { value: "vintageRefined", label: "Vintage — refined olive & gold" },
+  { value: "vintageEditorial", label: "Vintage — editorial dark & serif" },
+  { value: "devMode", label: "Dark / Dev Mode — playful motion" },
+  { value: "scrollStory", label: "Scroll story — layers & reveals" },
+  { value: "atrium", label: "Atrium — night garden & aurora glass" },
+];
 
 const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
   const navigate = useNavigate();
@@ -422,7 +435,8 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
                 </p>
               ) : billing.billingTier === "free" ? (
                 <p>
-                  <span className="font-medium text-foreground">Free plan:</span> one portfolio, Glass theme. Need more?{" "}
+                  <span className="font-medium text-foreground">Free plan:</span> one portfolio and the Glass template
+                  only. Basic and Premium include every theme. Need more?{" "}
                   <Link to="/billing" className="text-primary underline underline-offset-2">
                     Upgrade
                   </Link>
@@ -430,14 +444,15 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
               ) : billing.billingTier === "basic" ? (
                 <p>
                   <span className="font-medium text-foreground">Basic:</span> up to {billing.limits.maxPortfolios}{" "}
-                  portfolios. Premium unlocks custom domain & removes branding.{" "}
+                  portfolios and all visual themes. Premium unlocks custom domain & removes branding.{" "}
                   <Link to="/billing" className="text-primary underline underline-offset-2">
                     Plans
                   </Link>
                 </p>
               ) : (
                 <p className="text-foreground/90">
-                  <span className="font-medium">Premium:</span> custom domain, no “Made with” badge, full analytics.
+                  <span className="font-medium">Premium:</span> all themes, custom domain, no “Made with” badge, full
+                  analytics.
                 </p>
               )}
             </div>
@@ -644,24 +659,46 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs text-muted-foreground">Visual theme</label>
-                  <select
+                  <Select
                     value={theme}
-                    onChange={(e) => setTheme(e.target.value as PortfolioTheme)}
-                    className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary"
+                    onValueChange={(v) => setTheme(v as PortfolioTheme)}
                   >
-                    <option value="glass" disabled={billing ? !billing.limits.themes.includes("glass") : false}>
-                      Glass Pro
-                    </option>
-                    <option value="minimal" disabled={billing ? !billing.limits.themes.includes("minimal") : false}>
-                      Minimal Clean
-                    </option>
-                    <option value="bold" disabled={billing ? !billing.limits.themes.includes("bold") : false}>
-                      Bold Contrast
-                    </option>
-                  </select>
-                  {billing?.billingTier === "free" ? (
-                    <p className="mt-1 text-xs text-muted-foreground">Premium themes require Basic or Premium.</p>
-                  ) : null}
+                    <SelectTrigger className="glass-subtle h-auto min-h-[2.875rem] w-full rounded-xl border border-white/10 bg-transparent py-3 pl-3 pr-3 text-left text-sm text-foreground shadow-none ring-offset-background focus:border-primary focus:ring-2 focus:ring-primary/25 [&>svg]:text-muted-foreground">
+                      <SelectValue placeholder="Choose a theme" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[200] border border-white/15 bg-zinc-950 text-zinc-100 shadow-xl">
+                      {THEME_OPTIONS.map(({ value: themeValue, label }) => (
+                        <SelectItem
+                          key={themeValue}
+                          value={themeValue}
+                          disabled={billing ? !billing.limits.themes.includes(themeValue) : false}
+                          className="cursor-pointer text-zinc-100 focus:bg-white/10 focus:text-zinc-50 data-[disabled]:opacity-40"
+                        >
+                          {label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {!billing ? (
+                      <>Theme options match your plan once billing details load.</>
+                    ) : billing.billingTier === "free" ? (
+                      <>
+                        Free includes the Glass Pro template only. Basic and Premium include every theme below as part of
+                        your plan.{" "}
+                        <Link to="/#templates" className="font-medium text-primary underline-offset-4 hover:underline">
+                          Overview of looks
+                        </Link>
+                      </>
+                    ) : (
+                      <>
+                        Every theme below is included with your subscription (Basic and Premium).{" "}
+                        <Link to="/#templates" className="font-medium text-primary underline-offset-4 hover:underline">
+                          Overview of looks
+                        </Link>
+                      </>
+                    )}
+                  </p>
                 </div>
                   </div>
                 </div>

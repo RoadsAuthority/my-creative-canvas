@@ -1,4 +1,13 @@
-export type PortfolioTheme = "glass" | "minimal" | "bold";
+export type PortfolioTheme =
+  | "glass"
+  | "minimal"
+  | "bold"
+  | "vintage"
+  | "vintageRefined"
+  | "vintageEditorial"
+  | "devMode"
+  | "scrollStory"
+  | "atrium";
 
 export interface PortfolioProject {
   id: string;

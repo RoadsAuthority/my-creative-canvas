@@ -13,6 +13,12 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import { PortfolioDevModeTheme } from "@/components/portfolio/PortfolioDevModeTheme";
+import { PortfolioAtriumTheme } from "@/components/portfolio/PortfolioAtriumTheme";
+import { PortfolioScrollStoryTheme } from "@/components/portfolio/PortfolioScrollStoryTheme";
+import { PortfolioVintageEditorialTheme } from "@/components/portfolio/PortfolioVintageEditorialTheme";
+import { PortfolioVintageRefinedTheme } from "@/components/portfolio/PortfolioVintageRefinedTheme";
+import { PortfolioVintageTheme } from "@/components/portfolio/PortfolioVintageTheme";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPortfolioAnalytics, trackPortfolioView, trackProjectClick } from "@/lib/analytics-service";
@@ -201,6 +207,164 @@ const Portfolio = () => {
     data.projects.find((project) => (project.imageUrls?.length ?? 0) > 0 || project.imageUrl)?.imageUrls?.[0] ||
     data.projects.find((project) => project.imageUrl)?.imageUrl ||
     "";
+
+  if (
+    data.theme === "vintage" ||
+    data.theme === "vintageRefined" ||
+    data.theme === "vintageEditorial" ||
+    data.theme === "devMode" ||
+    data.theme === "scrollStory" ||
+    data.theme === "atrium"
+  ) {
+    return (
+      <div className="min-h-screen">
+        {isOwner && !visitorPreview ? (
+          <div className="sticky top-0 z-[60] border-b border-primary/25 bg-gradient-to-r from-primary/15 via-primary/5 to-transparent backdrop-blur-md">
+            <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-5 py-3 text-sm md:px-8">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
+                  Owner view
+                </span>
+                <span className="text-muted-foreground">
+                  Visitors never see this bar — only your public page below matches what they get.
+                </span>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                {ownerStats ? (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-background/60 px-3 py-1 text-xs text-muted-foreground">
+                    <BarChart3 className="h-3.5 w-3.5" />
+                    {ownerStats.views} views · {ownerStats.clicks} project clicks
+                  </span>
+                ) : null}
+                <Link
+                  to="/app"
+                  className="rounded-full border border-white/15 bg-background/80 px-4 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
+                >
+                  Dashboard
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setVisitorPreview(true)}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  View as visitor
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+        {data.theme === "devMode" ? (
+          <PortfolioDevModeTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "scrollStory" ? (
+          <PortfolioScrollStoryTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "atrium" ? (
+          <PortfolioAtriumTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "vintage" ? (
+          <PortfolioVintageTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "vintageRefined" ? (
+          <PortfolioVintageRefinedTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : (
+          <PortfolioVintageEditorialTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        )}
+        {isOwner && visitorPreview ? (
+          <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4">
+            <button
+              type="button"
+              onClick={() => setVisitorPreview(false)}
+              className="pointer-events-auto inline-flex items-center gap-2 rounded-full border border-border bg-background/95 px-5 py-2.5 text-sm font-semibold shadow-lg backdrop-blur-md transition hover:bg-muted"
+            >
+              Exit visitor preview
+            </button>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#080b12] text-foreground">

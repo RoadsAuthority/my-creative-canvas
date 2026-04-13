@@ -29,7 +29,13 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
           </span>
         </Link>
 
-        <nav className="flex items-center gap-2">
+        <nav className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/#templates"
+            className="rounded-full px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Themes
+          </Link>
           {!onDashboard ? (
             <>
               <Link
