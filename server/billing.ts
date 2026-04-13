@@ -27,7 +27,7 @@ export function maxPortfoliosForTier(tier: BillingTier): number {
 
 export function themeAllowedForTier(tier: BillingTier, theme: string): boolean {
   if (tier === "free") return theme === "glass";
-  return true;
+  return ["glass", "minimal", "bold", "vintage", "vintageRefined", "vintageEditorial", "devMode", "scrollStory", "atrium"].includes(theme);
 }
 
 export function customDomainAllowedForTier(tier: BillingTier): boolean {
@@ -269,7 +269,7 @@ export function billingPlansPayload() {
       branding: false,
       includes: [
         "Up to 5 portfolios",
-        "All themes (Glass, Minimal, Bold)",
+        "Every portfolio visual theme included",
         "Basic analytics (views & project clicks)",
         "Unlimited edits & republish",
         "No “Made with” branding",
@@ -308,7 +308,7 @@ export function billingPlansPayload() {
       branding: true,
       includes: [
         "1 live portfolio",
-        "Glass theme only",
+        "Glass template only (full theme library on Basic or Premium)",
         "Public URL & print/PDF export",
         "Social links on your page",
         "Path domain: pf.me/user style URL",

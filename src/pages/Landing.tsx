@@ -185,6 +185,52 @@ const Landing = () => {
         </section>
 
         <section
+          id="templates"
+          className="scroll-mt-24 border-t border-white/10 bg-white/[0.02] px-5 py-20 md:px-10"
+        >
+          <div className="mx-auto max-w-6xl">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Portfolio templates</p>
+            <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Looks that match your craft</h2>
+            <p className="mt-3 max-w-2xl text-muted-foreground">
+              The Free plan ships with the Glass Pro template. Basic and Premium both include the full set below — it is
+              bundled with your subscription, not sold separately. Pick any look in the editor once you are subscribed.
+            </p>
+            <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                "Glass Pro — Free plan",
+                "Minimal & Bold — Basic & Premium",
+                "Vintage family — Basic & Premium",
+                "Dark / Dev Mode — Basic & Premium",
+                "Scroll story — Basic & Premium",
+                "Atrium — Basic & Premium",
+              ].map((label) => (
+                <li
+                  key={label}
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-foreground"
+                >
+                  <LayoutTemplate className="h-4 w-4 shrink-0 text-primary" />
+                  {label}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-10 flex flex-wrap gap-4">
+              <a
+                href="#pricing"
+                className="inline-flex items-center justify-center rounded-full border border-primary/70 bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground shadow-md shadow-primary/25 transition hover:bg-primary/90"
+              >
+                Compare plans
+              </a>
+              <Link
+                to="/auth"
+                className="glass-frosted inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
+              >
+                Sign in to choose a theme
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section
           id="pricing"
           className="scroll-mt-24 border-t border-white/10 bg-white/[0.02] px-5 py-20 md:px-10"
         >
@@ -305,7 +351,7 @@ const Landing = () => {
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>Static HTML export for full offline hosting</li>
               <li>Visitor geolocation insights and traffic source breakdown</li>
-              <li>Portfolio templates marketplace and section presets</li>
+              <li>Section layout presets for faster page builds</li>
             </ul>
           </div>
           <div className="mx-auto flex max-w-6xl flex-col items-center rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 px-8 py-16 text-center md:px-16">

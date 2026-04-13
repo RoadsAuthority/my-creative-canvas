@@ -93,7 +93,8 @@ const Dashboard = () => {
                 </p>
               ) : billing.billingTier === "free" ? (
                 <p>
-                  <span className="font-medium text-foreground">Free plan:</span> one portfolio, Glass theme. Need more?{" "}
+                  <span className="font-medium text-foreground">Free plan:</span> one portfolio and the Glass template
+                  only. Basic and Premium include every theme. Need more?{" "}
                   <Link to="/billing" className="text-primary underline underline-offset-2">
                     Upgrade
                   </Link>
@@ -101,14 +102,15 @@ const Dashboard = () => {
               ) : billing.billingTier === "basic" ? (
                 <p>
                   <span className="font-medium text-foreground">Basic:</span> up to {billing.limits.maxPortfolios}{" "}
-                  portfolios. Premium unlocks custom domain & removes branding.{" "}
+                  portfolios and all visual themes. Premium unlocks custom domain & removes branding.{" "}
                   <Link to="/billing" className="text-primary underline underline-offset-2">
                     Plans
                   </Link>
                 </p>
               ) : (
                 <p className="text-foreground/90">
-                  <span className="font-medium">Premium:</span> custom domain, no “Made with” badge, full analytics.
+                  <span className="font-medium">Premium:</span> all themes, custom domain, no “Made with” badge, full
+                  analytics.
                 </p>
               )}
             </div>

@@ -149,6 +149,9 @@ const Profile = () => {
           <Link to="/app" className="glass-subtle rounded-full px-5 py-2.5 text-sm font-medium">
             Dashboard
           </Link>
+          <Link to="/#templates" className="glass-subtle rounded-full px-5 py-2.5 text-sm font-medium">
+            Theme overview
+          </Link>
           <Link to="/billing" className="glass-subtle rounded-full px-5 py-2.5 text-sm font-medium">
             Plans & billing
           </Link>

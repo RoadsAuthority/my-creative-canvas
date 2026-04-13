@@ -528,7 +528,10 @@ app.get("/billing/status", authMiddleware, async (req, res) => {
     portfolioCount: count,
     limits: {
       maxPortfolios: mode === "strict" && tier === "free" ? 0 : maxPortfoliosForTier(tier),
-      themes: tier === "free" ? ["glass"] : ["glass", "minimal", "bold"],
+      themes:
+        tier === "free"
+          ? ["glass"]
+          : ["glass", "minimal", "bold", "vintage", "vintageRefined", "vintageEditorial", "devMode", "scrollStory", "atrium"],
       customDomain: tier === "premium",
       analytics: tier === "basic" || tier === "premium",
       showPoweredBy: tier === "free",

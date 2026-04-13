@@ -60,6 +60,12 @@
     @apply bg-background text-foreground font-body antialiased;
   }
 
+  /* Native selects: avoid white option menus on dark UI (browser support varies). */
+  select option {
+    background-color: hsl(220 18% 11%);
+    color: hsl(220 15% 90%);
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-display;
   }
