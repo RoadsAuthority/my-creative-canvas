@@ -7,7 +7,10 @@ export type PortfolioTheme =
   | "vintageEditorial"
   | "devMode"
   | "scrollStory"
-  | "atrium";
+  | "atrium"
+  | "mustard"
+  | "evergreen"
+  | "midnightGold";
 
 export interface PortfolioProject {
   id: string;

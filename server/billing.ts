@@ -27,7 +27,20 @@ export function maxPortfoliosForTier(tier: BillingTier): number {
 
 export function themeAllowedForTier(tier: BillingTier, theme: string): boolean {
   if (tier === "free") return theme === "glass";
-  return ["glass", "minimal", "bold", "vintage", "vintageRefined", "vintageEditorial", "devMode", "scrollStory", "atrium"].includes(theme);
+  return [
+    "glass",
+    "minimal",
+    "bold",
+    "vintage",
+    "vintageRefined",
+    "vintageEditorial",
+    "devMode",
+    "scrollStory",
+    "atrium",
+    "mustard",
+    "evergreen",
+    "midnightGold",
+  ].includes(theme);
 }
 
 export function customDomainAllowedForTier(tier: BillingTier): boolean {

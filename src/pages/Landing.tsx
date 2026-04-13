@@ -203,6 +203,9 @@ const Landing = () => {
                 "Dark / Dev Mode — Basic & Premium",
                 "Scroll story — Basic & Premium",
                 "Atrium — Basic & Premium",
+                "Mustard — light editorial",
+                "Evergreen — forest & amber",
+                "Midnight — charcoal & gold",
               ].map((label) => (
                 <li
                   key={label}

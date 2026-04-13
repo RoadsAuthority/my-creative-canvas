@@ -15,6 +15,9 @@ import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { PortfolioDevModeTheme } from "@/components/portfolio/PortfolioDevModeTheme";
 import { PortfolioAtriumTheme } from "@/components/portfolio/PortfolioAtriumTheme";
+import { PortfolioEvergreenTheme } from "@/components/portfolio/PortfolioEvergreenTheme";
+import { PortfolioMidnightGoldTheme } from "@/components/portfolio/PortfolioMidnightGoldTheme";
+import { PortfolioMustardTheme } from "@/components/portfolio/PortfolioMustardTheme";
 import { PortfolioScrollStoryTheme } from "@/components/portfolio/PortfolioScrollStoryTheme";
 import { PortfolioVintageEditorialTheme } from "@/components/portfolio/PortfolioVintageEditorialTheme";
 import { PortfolioVintageRefinedTheme } from "@/components/portfolio/PortfolioVintageRefinedTheme";
@@ -214,7 +217,10 @@ const Portfolio = () => {
     data.theme === "vintageEditorial" ||
     data.theme === "devMode" ||
     data.theme === "scrollStory" ||
-    data.theme === "atrium"
+    data.theme === "atrium" ||
+    data.theme === "mustard" ||
+    data.theme === "evergreen" ||
+    data.theme === "midnightGold"
   ) {
     return (
       <div className="min-h-screen">
@@ -288,6 +294,54 @@ const Portfolio = () => {
           />
         ) : data.theme === "atrium" ? (
           <PortfolioAtriumTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "mustard" ? (
+          <PortfolioMustardTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "evergreen" ? (
+          <PortfolioEvergreenTheme
+            data={data}
+            heroImage={heroImage}
+            aboutTitle={aboutTitle}
+            aboutText={aboutText}
+            hasSocial={Boolean(hasSocial)}
+            social={social}
+            visitorChrome={visitorChrome}
+            isOwner={isOwner}
+            user={user}
+            hasApi={hasApi}
+            lightbox={lightbox}
+            setLightbox={setLightbox}
+            setVisitorPreview={setVisitorPreview}
+          />
+        ) : data.theme === "midnightGold" ? (
+          <PortfolioMidnightGoldTheme
             data={data}
             heroImage={heroImage}
             aboutTitle={aboutTitle}

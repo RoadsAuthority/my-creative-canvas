@@ -531,7 +531,20 @@ app.get("/billing/status", authMiddleware, async (req, res) => {
       themes:
         tier === "free"
           ? ["glass"]
-          : ["glass", "minimal", "bold", "vintage", "vintageRefined", "vintageEditorial", "devMode", "scrollStory", "atrium"],
+          : [
+              "glass",
+              "minimal",
+              "bold",
+              "vintage",
+              "vintageRefined",
+              "vintageEditorial",
+              "devMode",
+              "scrollStory",
+              "atrium",
+              "mustard",
+              "evergreen",
+              "midnightGold",
+            ],
       customDomain: tier === "premium",
       analytics: tier === "basic" || tier === "premium",
       showPoweredBy: tier === "free",
