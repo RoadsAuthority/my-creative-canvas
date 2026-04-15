@@ -131,7 +131,8 @@ app.use(
   }),
 );
 
-const jsonBodyLimit = process.env.JSON_BODY_LIMIT?.trim() || (isProd ? "2mb" : "25mb");
+/** Base64 in JSON grows ~33%; photographers need headroom — override with JSON_BODY_LIMIT. */
+const jsonBodyLimit = process.env.JSON_BODY_LIMIT?.trim() || (isProd ? "40mb" : "25mb");
 app.use(express.json({ limit: jsonBodyLimit }));
 app.use(cookieParser());
 
@@ -968,6 +969,18 @@ app.use((err: unknown, _req: express.Request, res: express.Response, next: expre
   console.error(err);
   if (res.headersSent) {
     next(err);
+    return;
+  }
+  const bodyErr = err as { type?: string; status?: number; statusCode?: number };
+  if (
+    bodyErr?.type === "entity.too.large" ||
+    bodyErr?.status === 413 ||
+    bodyErr?.statusCode === 413
+  ) {
+    res.status(413).json({
+      message:
+        "Request body too large (often many big images as base64). Use smaller files, fewer images per save, host images at a public URL, or set JSON_BODY_LIMIT higher on the API server.",
+    });
     return;
   }
   const pg = err as { code?: string; detail?: string; message?: string };

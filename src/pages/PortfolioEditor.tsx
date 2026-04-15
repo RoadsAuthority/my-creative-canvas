@@ -64,6 +64,22 @@ const ALLOWED_CV_TYPES = [
 ];
 const MAX_VIDEO_SIZE_MB = 25;
 const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
+/** Per image file (base64 JSON can hit API JSON_BODY_LIMIT if many are added at once). */
+const MAX_IMAGE_FILE_MB = 20;
+const MAX_IMAGE_FILE_BYTES = MAX_IMAGE_FILE_MB * 1024 * 1024;
+
+function normalizeProjectImageUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const candidate = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const parsed = new URL(candidate);
+    if (!/^https?:$/i.test(parsed.protocol)) return null;
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
 
 const THEME_OPTIONS: { value: PortfolioTheme; label: string }[] = [
   { value: "glass", label: "Glass Pro" },
@@ -104,6 +120,10 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
   const [social, setSocial] = useState<SocialLinks>(emptySocial);
   const [slug, setSlug] = useState("");
   const [projects, setProjects] = useState<PortfolioProject[]>([]);
+  const [projectImageUrlDrafts, setProjectImageUrlDrafts] = useState<Record<string, string>>({});
+  const [projectImageInputMode, setProjectImageInputMode] = useState<
+    Record<string, "upload" | "url">
+  >({});
   const [recent, setRecent] = useState<PortfolioRecord[]>([]);
   const [listLoading, setListLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -162,6 +182,8 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
     setCustomDomainVerifyToken("");
     setSocial(emptySocial());
     setProjects([]);
+    setProjectImageUrlDrafts({});
+    setProjectImageInputMode({});
   };
 
   const loadPortfolio = (p: PortfolioRecord, opts?: { silent?: boolean }) => {
@@ -191,6 +213,8 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
     });
     setSlug(p.slug);
     setProjects(p.projects.length ? p.projects : []);
+    setProjectImageUrlDrafts({});
+    setProjectImageInputMode({});
     if (!opts?.silent) {
       toast.info("Loaded for editing", { description: `You are editing “${p.slug}”.` });
     }
@@ -226,6 +250,10 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
 
   const uploadProfileImage = (file?: File) => {
     if (!file) return;
+    if (file.size > MAX_IMAGE_FILE_BYTES) {
+      toast.error(`Images must be ${MAX_IMAGE_FILE_MB}MB or smaller each (or use a hosted image URL).`);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
@@ -259,6 +287,10 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
   const uploadProjectImages = (projectId: string, files?: FileList | null) => {
     if (!files?.length) return;
     for (const file of Array.from(files)) {
+      if (file.size > MAX_IMAGE_FILE_BYTES) {
+        toast.error(`"${file.name}" is over ${MAX_IMAGE_FILE_MB}MB — compress it or use a hosted URL.`);
+        continue;
+      }
       const reader = new FileReader();
       reader.onload = () => {
         const result = typeof reader.result === "string" ? reader.result : "";
@@ -298,6 +330,28 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const addProjectImageUrl = (projectId: string) => {
+    const raw = projectImageUrlDrafts[projectId] ?? "";
+    const normalized = normalizeProjectImageUrl(raw);
+    if (!normalized) {
+      toast.error("Enter a valid image URL (https://...).");
+      return;
+    }
+    setProjects((prev) =>
+      prev.map((project) => {
+        if (project.id !== projectId) return project;
+        const current = project.imageUrls?.length
+          ? [...project.imageUrls]
+          : project.imageUrl
+            ? [project.imageUrl]
+            : [];
+        if (!current.includes(normalized)) current.push(normalized);
+        return { ...project, imageUrls: current, imageUrl: current[0] ?? "" };
+      }),
+    );
+    setProjectImageUrlDrafts((prev) => ({ ...prev, [projectId]: "" }));
   };
 
   const publicUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/portfolio/${slug}`;
@@ -549,13 +603,17 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-1.5 block text-xs text-muted-foreground">Profile picture</label>
+                  <label className="mb-1.5 block text-xs text-muted-foreground">Profile picture</label>\n                  <p className="mb-1 text-xs text-muted-foreground">Max image size: {MAX_IMAGE_FILE_MB}MB each.</p>
                   <input
                     type="file"
                     accept="image/*"
                     onChange={(e) => uploadProfileImage(e.target.files?.[0])}
                     className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Max {MAX_IMAGE_FILE_MB}MB per file. Very large galleries may need a higher API limit (
+                    <code className="text-[0.65rem]">JSON_BODY_LIMIT</code>) or hosted image URLs.
+                  </p>
                   {profileImageUrl ? (
                     <div className="mt-3 flex items-center gap-3">
                       <img src={profileImageUrl} alt="Profile preview" className="h-14 w-14 rounded-full object-cover" />
@@ -992,13 +1050,70 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
                     <div className="mt-3 grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="mb-1 block text-xs text-muted-foreground">Images (multiple)</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          multiple
-                          onChange={(e) => uploadProjectImages(project.id, e.target.files)}
-                          className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
-                        />
+                        <p className="mb-1 text-xs text-muted-foreground">
+                          Upload files (max {MAX_IMAGE_FILE_MB}MB each) or add hosted image URLs for larger galleries.
+                        </p>
+                        <div className="mb-2 inline-flex rounded-lg border border-white/10 bg-white/[0.02] p-1">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setProjectImageInputMode((prev) => ({ ...prev, [project.id]: "upload" }))
+                            }
+                            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${
+                              (projectImageInputMode[project.id] ?? "upload") === "upload"
+                                ? "bg-primary/20 text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            Upload
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setProjectImageInputMode((prev) => ({ ...prev, [project.id]: "url" }))
+                            }
+                            className={`rounded-md px-2.5 py-1 text-[11px] font-medium transition ${
+                              (projectImageInputMode[project.id] ?? "upload") === "url"
+                                ? "bg-primary/20 text-foreground"
+                                : "text-muted-foreground hover:text-foreground"
+                            }`}
+                          >
+                            URL
+                          </button>
+                        </div>
+                        {(projectImageInputMode[project.id] ?? "upload") === "upload" ? (
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) => uploadProjectImages(project.id, e.target.files)}
+                            className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
+                          />
+                        ) : (
+                          <div className="mt-1 flex gap-2">
+                            <input
+                              value={projectImageUrlDrafts[project.id] ?? ""}
+                              onChange={(e) =>
+                                setProjectImageUrlDrafts((prev) => ({ ...prev, [project.id]: e.target.value }))
+                              }
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  e.preventDefault();
+                                  addProjectImageUrl(project.id);
+                                }
+                              }}
+                              placeholder="https://example.com/image.jpg"
+                              className="glass-subtle min-w-0 flex-1 rounded-lg border border-white/10 bg-transparent p-2 text-xs outline-none focus:border-primary"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => addProjectImageUrl(project.id)}
+                              className="glass-subtle rounded-lg px-3 py-2 text-xs font-medium"
+                            >
+                              Add URL
+                            </button>
+                          </div>
+                        )}
                         {(project.imageUrls?.length || project.imageUrl) ? (
                           <div className="mt-3 grid grid-cols-2 gap-2">
                             {(project.imageUrls?.length ? project.imageUrls : project.imageUrl ? [project.imageUrl] : []).map((src, i) => (
@@ -1086,3 +1201,6 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
 };
 
 export default PortfolioEditor;
+
+
+
