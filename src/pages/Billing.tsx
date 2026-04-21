@@ -7,7 +7,6 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   capturePayPalPayment,
-  devSetBillingTier,
   fetchBillingPlans,
   fetchBillingStatus,
   fetchManualPaymentInfo,
@@ -17,10 +16,8 @@ import {
   type ManualPaymentInfo,
 } from "@/lib/billing-service";
 import { basicTierCopy, freeTierCopy, premiumTierCopy } from "@/lib/pricing-data";
-import type { BillingTier } from "@/types/auth";
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
-const devBypass = import.meta.env.DEV && import.meta.env.VITE_BILLING_DEV_BYPASS === "true";
 
 const Billing = () => {
   const { user, loading, refresh } = useAuth();
@@ -88,24 +85,12 @@ const Billing = () => {
     if (url) window.location.href = url;
   };
 
-  const onDevTier = async (tier: BillingTier) => {
-    const ok = await devSetBillingTier(tier);
-    if (ok) {
-      toast.success(`Tier set to ${tier}`);
-      refresh();
-      const s = await fetchBillingStatus();
-      setStatus(s);
-    } else {
-      toast.error("Dev bypass not enabled on server (BILLING_DEV_BYPASS=true).");
-    }
-  };
-
   if (!hasApi) {
     return (
       <div className="flex min-h-screen flex-col bg-background">
         <SiteHeader />
         <main className="container flex flex-1 flex-col items-center justify-center px-4 py-16 text-center">
-          <p className="text-muted-foreground">Billing runs when the API is connected.</p>
+          <p className="text-muted-foreground">Billing is temporarily unavailable.</p>
           <Link to="/app" className="mt-6 text-primary underline">
             Dashboard
           </Link>
@@ -150,7 +135,13 @@ const Billing = () => {
   const freeIncludes = plans?.free?.includes?.length ? plans.free.includes : freeTierCopy.includes;
   const freeRestrictions = plans?.free?.restrictions?.length ? plans.free.restrictions : freeTierCopy.restrictions ?? [];
   const payLabel =
-    provider === "paypal" ? "Pay with PayPal" : provider === "stripe" ? "Pay with card" : "Pay online";
+    provider === "paypal"
+      ? "Pay with PayPal"
+      : provider === "stripe"
+        ? "Pay with card"
+        : provider === "lemonsqueezy"
+          ? "Pay securely"
+          : "Pay online";
 
   return (
     <div className="min-h-screen bg-background">
@@ -178,20 +169,19 @@ const Billing = () => {
             <p className="mt-3 max-w-2xl text-sm text-muted-foreground">
               {provider === "manual" && (
                 <>
-                  <span className="font-medium text-foreground">Namibia / no Stripe:</span> use local bank transfer
+                  <span className="font-medium text-foreground">Prefer local transfer?</span> use bank transfer
                   (EFT). After payment, we activate your plan when we match your reference (or use the contact email
                   below).
                 </>
               )}
               {provider === "paypal" && (
-                <>
-                  Online payments use PayPal. Amounts are charged in{" "}
-                  <span className="font-mono">{plans?.paypalCurrency ?? "USD"}</span> — compare to your NAD price
-                  before paying. Basic and Premium are one-time purchases (not recurring subscriptions).
-                </>
+                <>Online payments are handled by our checkout provider and may include cards, wallet options, or PayPal depending on availability.</>
               )}
               {provider === "stripe" && (
                 <>Cards are processed securely by Stripe.</>
+              )}
+              {provider === "lemonsqueezy" && (
+                <>Checkout is handled by Lemon Squeezy on a secure hosted page with support for cards and wallet methods such as Apple Pay and Google Pay (availability varies by region/device).</>
               )}
             </p>
           </div>
@@ -305,7 +295,7 @@ const Billing = () => {
             </button>
             {!checkoutOk && provider !== "manual" ? (
               <p className="mt-2 text-xs text-amber-600 dark:text-amber-400">
-                Configure payment keys on the server (Stripe or PayPal).
+                Configure payment keys/links on the server (Stripe, PayPal, or Lemon Squeezy).
               </p>
             ) : null}
           </div>
@@ -372,25 +362,6 @@ const Billing = () => {
             ))}
           </ul>
         </div>
-
-        {devBypass ? (
-          <div className="mt-8 rounded-xl border border-dashed border-amber-500/50 p-4 text-sm">
-            <p className="font-medium text-amber-700 dark:text-amber-400">Dev: simulate tier</p>
-            <p className="mt-1 text-muted-foreground">Server needs BILLING_DEV_BYPASS=true</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {(["free", "basic", "premium"] as const).map((t) => (
-                <button
-                  key={t}
-                  type="button"
-                  onClick={() => onDevTier(t)}
-                  className="rounded-full border border-white/15 px-3 py-1 text-xs capitalize"
-                >
-                  Set {t}
-                </button>
-              ))}
-            </div>
-          </div>
-        ) : null}
 
         <Link to="/app" className="mt-10 inline-block text-sm text-primary hover:underline">
           ← Back to dashboard

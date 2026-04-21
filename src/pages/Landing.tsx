@@ -36,8 +36,8 @@ const features = [
   },
   {
     icon: Shield,
-    title: "Your data, your stack",
-    body: "Sign in, store portfolios in your Postgres (Neon), and keep credentials on the server.",
+    title: "Built for real workflows",
+    body: "Update projects anytime, keep one polished public link, and publish quickly when opportunities land.",
   },
 ];
 

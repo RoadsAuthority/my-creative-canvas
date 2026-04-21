@@ -11,17 +11,8 @@ import {
   MapPin,
   Mail,
 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { PortfolioDevModeTheme } from "@/components/portfolio/PortfolioDevModeTheme";
-import { PortfolioAtriumTheme } from "@/components/portfolio/PortfolioAtriumTheme";
-import { PortfolioEvergreenTheme } from "@/components/portfolio/PortfolioEvergreenTheme";
-import { PortfolioMidnightGoldTheme } from "@/components/portfolio/PortfolioMidnightGoldTheme";
-import { PortfolioMustardTheme } from "@/components/portfolio/PortfolioMustardTheme";
-import { PortfolioScrollStoryTheme } from "@/components/portfolio/PortfolioScrollStoryTheme";
-import { PortfolioVintageEditorialTheme } from "@/components/portfolio/PortfolioVintageEditorialTheme";
-import { PortfolioVintageRefinedTheme } from "@/components/portfolio/PortfolioVintageRefinedTheme";
-import { PortfolioVintageTheme } from "@/components/portfolio/PortfolioVintageTheme";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useAuth } from "@/contexts/AuthContext";
 import { getPortfolioAnalytics, trackPortfolioView, trackProjectClick } from "@/lib/analytics-service";
@@ -31,6 +22,39 @@ import type { PortfolioRecord } from "@/lib/portfolio-service";
 import type { PortfolioProject } from "@/types/portfolio";
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
+const PortfolioDevModeTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioDevModeTheme")).PortfolioDevModeTheme,
+}));
+const PortfolioMinimalCleanTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioMinimalTheme")).PortfolioMinimalCleanTheme,
+}));
+const PortfolioBoldContrastTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioBoldContrastTheme")).PortfolioBoldContrastTheme,
+}));
+const PortfolioScrollStoryTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioScrollStoryTheme")).PortfolioScrollStoryTheme,
+}));
+const PortfolioAtriumTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioAtriumTheme")).PortfolioAtriumTheme,
+}));
+const PortfolioMustardTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioMustardTheme")).PortfolioMustardTheme,
+}));
+const PortfolioEvergreenTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioEvergreenTheme")).PortfolioEvergreenTheme,
+}));
+const PortfolioMidnightGoldTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioMidnightGoldTheme")).PortfolioMidnightGoldTheme,
+}));
+const PortfolioVintageTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioVintageTheme")).PortfolioVintageTheme,
+}));
+const PortfolioVintageRefinedTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioVintageRefinedTheme")).PortfolioVintageRefinedTheme,
+}));
+const PortfolioVintageEditorialTheme = lazy(async () => ({
+  default: (await import("@/components/portfolio/PortfolioVintageEditorialTheme")).PortfolioVintageEditorialTheme,
+}));
 
 const cleanTags = (tags?: string) =>
   (tags ?? "")
@@ -212,6 +236,8 @@ const Portfolio = () => {
     "";
 
   if (
+    data.theme === "minimal" ||
+    data.theme === "bold" ||
     data.theme === "vintage" ||
     data.theme === "vintageRefined" ||
     data.theme === "vintageEditorial" ||
@@ -231,9 +257,7 @@ const Portfolio = () => {
                 <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
                   Owner view
                 </span>
-                <span className="text-muted-foreground">
-                  Visitors never see this bar — only your public page below matches what they get.
-                </span>
+                <span className="text-muted-foreground">Manage your page and quick controls.</span>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {ownerStats ? (
@@ -260,151 +284,191 @@ const Portfolio = () => {
             </div>
           </div>
         ) : null}
-        {data.theme === "devMode" ? (
-          <PortfolioDevModeTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "scrollStory" ? (
-          <PortfolioScrollStoryTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "atrium" ? (
-          <PortfolioAtriumTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "mustard" ? (
-          <PortfolioMustardTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "evergreen" ? (
-          <PortfolioEvergreenTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "midnightGold" ? (
-          <PortfolioMidnightGoldTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "vintage" ? (
-          <PortfolioVintageTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : data.theme === "vintageRefined" ? (
-          <PortfolioVintageRefinedTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        ) : (
-          <PortfolioVintageEditorialTheme
-            data={data}
-            heroImage={heroImage}
-            aboutTitle={aboutTitle}
-            aboutText={aboutText}
-            hasSocial={Boolean(hasSocial)}
-            social={social}
-            visitorChrome={visitorChrome}
-            isOwner={isOwner}
-            user={user}
-            hasApi={hasApi}
-            lightbox={lightbox}
-            setLightbox={setLightbox}
-            setVisitorPreview={setVisitorPreview}
-          />
-        )}
+        <Suspense
+          fallback={
+            <div className="flex min-h-[40vh] items-center justify-center px-6 text-sm text-muted-foreground">
+              Loading theme...
+            </div>
+          }
+        >
+          {data.theme === "devMode" ? (
+            <PortfolioDevModeTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "minimal" ? (
+            <PortfolioMinimalCleanTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "bold" ? (
+            <PortfolioBoldContrastTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "scrollStory" ? (
+            <PortfolioScrollStoryTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "atrium" ? (
+            <PortfolioAtriumTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "mustard" ? (
+            <PortfolioMustardTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "evergreen" ? (
+            <PortfolioEvergreenTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "midnightGold" ? (
+            <PortfolioMidnightGoldTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "vintage" ? (
+            <PortfolioVintageTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : data.theme === "vintageRefined" ? (
+            <PortfolioVintageRefinedTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          ) : (
+            <PortfolioVintageEditorialTheme
+              data={data}
+              heroImage={heroImage}
+              aboutTitle={aboutTitle}
+              aboutText={aboutText}
+              hasSocial={Boolean(hasSocial)}
+              social={social}
+              visitorChrome={visitorChrome}
+              isOwner={isOwner}
+              user={user}
+              hasApi={hasApi}
+              lightbox={lightbox}
+              setLightbox={setLightbox}
+              setVisitorPreview={setVisitorPreview}
+            />
+          )}
+        </Suspense>
         {isOwner && visitorPreview ? (
           <div className="pointer-events-none fixed inset-x-0 bottom-6 z-[60] flex justify-center px-4">
             <button
@@ -429,9 +493,7 @@ const Portfolio = () => {
               <span className="rounded-full bg-primary/20 px-2.5 py-0.5 text-xs font-semibold uppercase tracking-wide text-primary">
                 Owner view
               </span>
-              <span className="text-muted-foreground">
-                Visitors never see this bar — only your public page below matches what they get.
-              </span>
+              <span className="text-muted-foreground">Manage your page and quick controls.</span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {ownerStats ? (
@@ -471,7 +533,14 @@ const Portfolio = () => {
           >
             {heroImage ? (
               <>
-                <img src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-35" />
+                <img
+                  src={heroImage}
+                  alt=""
+                  loading="eager"
+                  fetchPriority="high"
+                  decoding="async"
+                  className="absolute inset-0 h-full w-full object-cover opacity-35"
+                />
                 <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/45" />
               </>
             ) : null}
@@ -638,6 +707,8 @@ const Portfolio = () => {
                               <img
                                 src={img}
                                 alt={`${project.title} preview ${i + 1}`}
+                                loading="lazy"
+                                decoding="async"
                                 className="h-56 w-full object-cover transition duration-500 group-hover:scale-[1.03] md:h-72"
                               />
                             </button>
@@ -648,7 +719,7 @@ const Portfolio = () => {
                         <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                           {(project.videoUrls ?? []).map((video, i) => (
                             <div key={`${project.id}-video-${i}`} className="overflow-hidden rounded-xl border border-white/10 bg-black">
-                              <video src={video} controls className="h-56 w-full object-cover md:h-72" />
+                              <video src={video} controls preload="metadata" className="h-56 w-full object-cover md:h-72" />
                             </div>
                           ))}
                         </div>

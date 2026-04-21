@@ -11,7 +11,8 @@ const Refund = () => (
         contact support with your payment reference for review.
       </p>
       <p className="mt-3 text-muted-foreground">
-        Approved refunds are processed through the original payment method (PayPal/Stripe/manual reconciliation).
+        Approved refunds are processed through the original payment method (for example Lemon Squeezy checkout method
+        or manual reconciliation).
       </p>
     </main>
     <SiteFooter />

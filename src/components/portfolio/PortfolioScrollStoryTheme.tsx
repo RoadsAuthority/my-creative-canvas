@@ -275,7 +275,7 @@ export function PortfolioScrollStoryTheme({
           >
             <div className="mx-auto max-w-4xl">
               <h2 className="font-mono text-xs uppercase tracking-[0.35em] text-emerald-400/90">Connect</h2>
-              <p className="mt-3 text-sm text-zinc-500">Email, location, résumé, and socials from your profile.</p>
+              <p className="mt-3 text-sm text-zinc-500">Get in touch for collaborations, freelance work, or full-time opportunities.</p>
               <motion.div
                 className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
                 variants={dirStaggerParent}
@@ -415,8 +415,7 @@ export function PortfolioScrollStoryTheme({
             <h2 className="font-mono text-xs uppercase tracking-[0.35em] text-amber-400/90">Selected work</h2>
             <p className="mt-4 max-w-2xl text-2xl font-semibold leading-tight text-white md:text-3xl">Projects & case studies</p>
             <p className="mt-3 text-sm text-zinc-500">
-              {data.location ? `${data.location} · ` : null}
-              Title, role, summary, context, outcomes, stack, tags, media — as in your dashboard.
+              Selected projects with context, outcomes, tools, and supporting visuals.
             </p>
 
             {data.projects.length === 0 ? (
@@ -667,3 +666,4 @@ export function PortfolioScrollStoryTheme({
     </div>
   );
 }
+

@@ -67,6 +67,53 @@ const MAX_VIDEO_SIZE_BYTES = MAX_VIDEO_SIZE_MB * 1024 * 1024;
 /** Per image file (base64 JSON can hit API JSON_BODY_LIMIT if many are added at once). */
 const MAX_IMAGE_FILE_MB = 20;
 const MAX_IMAGE_FILE_BYTES = MAX_IMAGE_FILE_MB * 1024 * 1024;
+const PROFILE_IMAGE_MAX_PX = 1400;
+const PROJECT_IMAGE_MAX_PX = 1920;
+const IMAGE_WEBP_QUALITY = 0.82;
+
+const readFileAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : "");
+    reader.onerror = () => reject(reader.error ?? new Error("Could not read file"));
+    reader.readAsDataURL(file);
+  });
+
+const loadImage = (src: string) =>
+  new Promise<HTMLImageElement>((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Could not decode image"));
+    img.src = src;
+  });
+
+async function optimizeImageDataUrl(
+  file: File,
+  options: { maxWidth: number; maxHeight: number; quality: number },
+): Promise<string> {
+  const originalDataUrl = await readFileAsDataUrl(file);
+  if (!file.type.startsWith("image/")) return originalDataUrl;
+  if (file.type === "image/gif" || file.type === "image/svg+xml") return originalDataUrl;
+
+  try {
+    const image = await loadImage(originalDataUrl);
+    const scale = Math.min(1, options.maxWidth / image.naturalWidth, options.maxHeight / image.naturalHeight);
+    const width = Math.max(1, Math.round(image.naturalWidth * scale));
+    const height = Math.max(1, Math.round(image.naturalHeight * scale));
+
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return originalDataUrl;
+
+    ctx.drawImage(image, 0, 0, width, height);
+    const optimized = canvas.toDataURL("image/webp", options.quality);
+    return optimized.length < originalDataUrl.length ? optimized : originalDataUrl;
+  } catch {
+    return originalDataUrl;
+  }
+}
 
 function normalizeProjectImageUrl(raw: string): string | null {
   const trimmed = raw.trim();
@@ -83,12 +130,12 @@ function normalizeProjectImageUrl(raw: string): string | null {
 
 const THEME_OPTIONS: { value: PortfolioTheme; label: string }[] = [
   { value: "glass", label: "Glass Pro" },
-  { value: "minimal", label: "Minimal Clean" },
-  { value: "bold", label: "Bold Contrast" },
+  { value: "minimal", label: "Minimal Clean — light editorial" },
+  { value: "bold", label: "Bold Contrast — coffee night blue" },
   { value: "vintage", label: "Vintage — warm sepia" },
   { value: "vintageRefined", label: "Vintage — refined olive & gold" },
   { value: "vintageEditorial", label: "Vintage — editorial dark & serif" },
-  { value: "devMode", label: "Dark / Dev Mode — playful motion" },
+  { value: "devMode", label: "Dark Motion — playful contrast" },
   { value: "scrollStory", label: "Scroll story — layers & reveals" },
   { value: "atrium", label: "Atrium — night garden & aurora glass" },
   { value: "mustard", label: "Mustard — light editorial & grid" },
@@ -248,18 +295,18 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
   const removeProject = (id: string) =>
     setProjects((prev) => prev.filter((project) => project.id !== id));
 
-  const uploadProfileImage = (file?: File) => {
+  const uploadProfileImage = async (file?: File) => {
     if (!file) return;
     if (file.size > MAX_IMAGE_FILE_BYTES) {
       toast.error(`Images must be ${MAX_IMAGE_FILE_MB}MB or smaller each (or use a hosted image URL).`);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      setProfileImageUrl(result);
-    };
-    reader.readAsDataURL(file);
+    const result = await optimizeImageDataUrl(file, {
+      maxWidth: PROFILE_IMAGE_MAX_PX,
+      maxHeight: PROFILE_IMAGE_MAX_PX,
+      quality: IMAGE_WEBP_QUALITY,
+    });
+    setProfileImageUrl(result);
   };
 
   const uploadCv = (file?: File) => {
@@ -284,25 +331,25 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
     reader.readAsDataURL(file);
   };
 
-  const uploadProjectImages = (projectId: string, files?: FileList | null) => {
+  const uploadProjectImages = async (projectId: string, files?: FileList | null) => {
     if (!files?.length) return;
     for (const file of Array.from(files)) {
       if (file.size > MAX_IMAGE_FILE_BYTES) {
         toast.error(`"${file.name}" is over ${MAX_IMAGE_FILE_MB}MB — compress it or use a hosted URL.`);
         continue;
       }
-      const reader = new FileReader();
-      reader.onload = () => {
-        const result = typeof reader.result === "string" ? reader.result : "";
-        setProjects((prev) =>
-          prev.map((project) => {
-            if (project.id !== projectId) return project;
-            const nextImages = [...(project.imageUrls ?? []), result];
-            return { ...project, imageUrls: nextImages, imageUrl: nextImages[0] ?? "" };
-          }),
-        );
-      };
-      reader.readAsDataURL(file);
+      const result = await optimizeImageDataUrl(file, {
+        maxWidth: PROJECT_IMAGE_MAX_PX,
+        maxHeight: PROJECT_IMAGE_MAX_PX,
+        quality: IMAGE_WEBP_QUALITY,
+      });
+      setProjects((prev) =>
+        prev.map((project) => {
+          if (project.id !== projectId) return project;
+          const nextImages = [...(project.imageUrls ?? []), result];
+          return { ...project, imageUrls: nextImages, imageUrl: nextImages[0] ?? "" };
+        }),
+      );
     }
   };
 
@@ -433,7 +480,7 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
         });
         return;
       }
-      toast.error("Could not save. Is the API running, or is this slug already taken?");
+      toast.error("Could not save. Please try again or use a different URL slug.");
     } finally {
       setSaving(false);
     }
@@ -611,8 +658,7 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
                     className="block w-full text-xs text-muted-foreground file:mr-3 file:rounded-full file:border-0 file:bg-primary/20 file:px-3 file:py-1.5 file:text-xs file:text-foreground hover:file:bg-primary/30"
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Max {MAX_IMAGE_FILE_MB}MB per file. Very large galleries may need a higher API limit (
-                    <code className="text-[0.65rem]">JSON_BODY_LIMIT</code>) or hosted image URLs.
+                    Max {MAX_IMAGE_FILE_MB}MB per file. Use hosted image URLs for very large galleries.
                   </p>
                   {profileImageUrl ? (
                     <div className="mt-3 flex items-center gap-3">

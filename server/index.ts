@@ -27,6 +27,7 @@ import {
   getBillingMode,
   getManualPaymentInfo,
   getUserTier,
+  handleLemonSqueezyWebhook,
   handleStripeWebhook,
   maxPortfoliosForTier,
   normalizeTier,
@@ -109,6 +110,13 @@ app.post(
   express.raw({ type: "application/json" }),
   (req, res, next) => {
     handleStripeWebhook(req, res, pool).catch(next);
+  },
+);
+app.post(
+  "/billing/lemonsqueezy/webhook",
+  express.raw({ type: "application/json" }),
+  (req, res, next) => {
+    handleLemonSqueezyWebhook(req, res, pool).catch(next);
   },
 );
 

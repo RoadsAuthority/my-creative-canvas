@@ -1,6 +1,7 @@
 /**
  * Billing tiers, limits, Stripe / PayPal / manual payment.
  */
+import { createHmac, timingSafeEqual } from "node:crypto";
 import type { Request, Response } from "express";
 import type { Pool } from "pg";
 import Stripe from "stripe";
@@ -18,6 +19,8 @@ export function getBillingMode(): "strict" | "freemium" {
   const m = (process.env.BILLING_MODE ?? "freemium").toLowerCase().trim();
   return m === "strict" ? "strict" : "freemium";
 }
+
+type PaymentProvider = "stripe" | "paypal" | "manual" | "lemonsqueezy";
 
 export function maxPortfoliosForTier(tier: BillingTier): number {
   if (tier === "premium") return 50;
@@ -132,13 +135,47 @@ function stripeConfigured(): boolean {
   );
 }
 
-/** Stripe (cards in many countries), PayPal (works for many NA merchants), or manual EFT. */
-export function getPaymentProvider(): "stripe" | "paypal" | "manual" {
+function lemonSqueezyConfigured(): boolean {
+  return Boolean(
+    process.env.LEMONSQUEEZY_CHECKOUT_BASIC_URL?.trim() &&
+      process.env.LEMONSQUEEZY_CHECKOUT_PREMIUM_URL?.trim() &&
+      process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim(),
+  );
+}
+
+function createLemonSqueezyCheckoutUrl(
+  userId: string,
+  email: string,
+  product: "basic" | "premium",
+): { url: string } | { error: string; status: number } {
+  const baseUrl =
+    product === "premium"
+      ? process.env.LEMONSQUEEZY_CHECKOUT_PREMIUM_URL?.trim()
+      : process.env.LEMONSQUEEZY_CHECKOUT_BASIC_URL?.trim();
+  if (!baseUrl) {
+    return { error: "Lemon Squeezy checkout URL is not configured.", status: 503 };
+  }
+  const tier = product === "premium" ? "premium" : "basic";
+  const url = new URL(baseUrl);
+  url.searchParams.set("checkout[email]", email);
+  url.searchParams.set("checkout[custom][userId]", userId);
+  url.searchParams.set("checkout[custom][tier]", tier);
+  return { url: url.toString() };
+}
+
+/** Stripe (cards), PayPal, Lemon Squeezy, or manual EFT. */
+export function getPaymentProvider(): PaymentProvider {
   const explicit = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
-  if (explicit === "stripe" || explicit === "paypal" || explicit === "manual") {
+  if (
+    explicit === "stripe" ||
+    explicit === "paypal" ||
+    explicit === "manual" ||
+    explicit === "lemonsqueezy"
+  ) {
     return explicit;
   }
   if (stripeConfigured()) return "stripe";
+  if (lemonSqueezyConfigured()) return "lemonsqueezy";
   if (paypalConfigured()) return "paypal";
   return "manual";
 }
@@ -179,6 +216,9 @@ export async function createCheckoutSession(
   if (provider === "paypal") {
     return createPayPalCheckoutUrl(userId, product);
   }
+  if (provider === "lemonsqueezy") {
+    return createLemonSqueezyCheckoutUrl(userId, email, product);
+  }
 
   const s = stripe();
   const priceId =
@@ -205,6 +245,57 @@ export async function createCheckoutSession(
   }
 
   return { url: session.url };
+}
+
+export async function handleLemonSqueezyWebhook(
+  req: Request,
+  res: Response,
+  pool: Pool,
+): Promise<void> {
+  const secret = process.env.LEMONSQUEEZY_WEBHOOK_SECRET?.trim();
+  if (!secret) {
+    res.status(503).send("Webhook not configured");
+    return;
+  }
+  const signature = req.headers["x-signature"];
+  if (!signature || typeof signature !== "string") {
+    res.status(400).send("Missing x-signature");
+    return;
+  }
+  const body = req.body as Buffer;
+  const digest = createHmac("sha256", secret).update(body).digest("hex");
+  const sigBuffer = Buffer.from(signature, "hex");
+  const digestBuffer = Buffer.from(digest, "hex");
+  if (
+    sigBuffer.length !== digestBuffer.length ||
+    !timingSafeEqual(sigBuffer, digestBuffer)
+  ) {
+    res.status(401).send("Invalid signature");
+    return;
+  }
+
+  let payload: unknown;
+  try {
+    payload = JSON.parse(body.toString("utf8"));
+  } catch {
+    res.status(400).send("Invalid payload");
+    return;
+  }
+
+  const obj = payload as {
+    meta?: { event_name?: string; custom_data?: { userId?: string; tier?: string } };
+  };
+  const eventName = obj.meta?.event_name ?? "";
+  const userId = obj.meta?.custom_data?.userId?.trim();
+  const tier = normalizeTier(obj.meta?.custom_data?.tier);
+  if (
+    (eventName === "order_created" || eventName === "subscription_created") &&
+    userId &&
+    (tier === "basic" || tier === "premium")
+  ) {
+    await pool.query(`UPDATE users SET billing_tier = $2::text WHERE id = $1::uuid`, [userId, tier]);
+  }
+  res.json({ received: true });
 }
 
 export async function handleStripeWebhook(req: Request, res: Response, pool: Pool): Promise<void> {
@@ -262,12 +353,21 @@ export function billingPlansPayload() {
       process.env.BILLING_CONTACT_EMAIL?.trim(),
   );
 
+  const checkoutAvailable =
+    provider === "paypal"
+      ? paypalConfigured()
+      : provider === "stripe"
+        ? stripeConfigured()
+        : provider === "lemonsqueezy"
+          ? lemonSqueezyConfigured()
+          : false;
+
   return {
     mode: getBillingMode(),
     currency: "USD",
     paymentProvider: provider,
     paypalCurrency: process.env.PAYPAL_CURRENCY ?? "USD",
-    checkoutAvailable: provider !== "manual" && (provider === "paypal" ? paypalConfigured() : stripeConfigured()),
+    checkoutAvailable,
     manualConfigured: provider === "manual" ? manualReady : true,
     basic: {
       label: process.env.BILLING_LABEL_BASIC ?? "Basic ($19)",
@@ -330,5 +430,6 @@ export function billingPlansPayload() {
     },
     stripeConfigured: stripeConfigured(),
     paypalConfigured: paypalConfigured(),
+    lemonSqueezyConfigured: lemonSqueezyConfigured(),
   };
 }

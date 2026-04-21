@@ -30,7 +30,7 @@ export type PlanCopyBlock = {
 export type BillingPlans = {
   mode: "strict" | "freemium";
   currency: string;
-  paymentProvider: "stripe" | "paypal" | "manual";
+  paymentProvider: "stripe" | "paypal" | "manual" | "lemonsqueezy";
   paypalCurrency?: string;
   checkoutAvailable: boolean;
   manualConfigured: boolean;
@@ -39,6 +39,7 @@ export type BillingPlans = {
   free: PlanCopyBlock & { themes?: string; customDomain?: boolean; analytics?: boolean; branding?: boolean };
   stripeConfigured: boolean;
   paypalConfigured: boolean;
+  lemonSqueezyConfigured?: boolean;
 };
 
 export type ManualPaymentInfo = {

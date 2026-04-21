@@ -17,7 +17,8 @@ const Privacy = () => {
         </p>
         <h2 className="mt-8 text-xl font-semibold">Payments</h2>
         <p className="mt-2 text-muted-foreground">
-          Payments are processed by third-party providers (PayPal/Stripe/manual EFT references). We do not store full card details.
+          Payments are processed by third-party providers (including Lemon Squeezy and manual EFT references). We do
+          not store full card details.
         </p>
         <h2 className="mt-8 text-xl font-semibold">Contact</h2>
         <p className="mt-2 text-muted-foreground">For privacy requests, contact support via your billing contact email.</p>

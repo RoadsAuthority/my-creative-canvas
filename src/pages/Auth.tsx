@@ -40,10 +40,7 @@ const Auth = () => {
           ← Back to home
         </Link>
         <h1 className="mt-4 text-3xl font-bold">{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          Secure sign-in. Your portfolios sync to your database when the API is running — otherwise this device keeps a
-          local draft.
-        </p>
+        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Secure sign-in for your portfolio workspace.</p>
 
         <div className="mt-6 space-y-3">
           <input
