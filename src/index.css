@@ -4,50 +4,94 @@
 
 @layer base {
   :root {
-    --background: 220 20% 7%;
-    --foreground: 220 15% 90%;
+    /* Dark mode: black + white */
+    --background: 0 0% 5%;
+    --foreground: 0 0% 96%;
 
-    --card: 220 18% 11%;
-    --card-foreground: 220 15% 90%;
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
 
-    --popover: 220 18% 11%;
-    --popover-foreground: 220 15% 90%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
 
-    --primary: 200 90% 55%;
-    --primary-foreground: 220 20% 7%;
+    --primary: 0 0% 96%;
+    --primary-foreground: 0 0% 8%;
 
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 220 15% 85%;
+    --secondary: 0 0% 16%;
+    --secondary-foreground: 0 0% 96%;
 
-    --muted: 220 12% 18%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 0 0% 13%;
+    --muted-foreground: 0 0% 73%;
 
-    --accent: 260 70% 60%;
-    --accent-foreground: 220 20% 95%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 0 0% 96%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 200 90% 55%;
+    --border: 0 0% 24%;
+    --input: 0 0% 24%;
+    --ring: 0 0% 96%;
 
     --radius: 1rem;
 
-    --glass-bg: 220 20% 12%;
-    --glass-border: 220 15% 22%;
-    --glass-shine: 220 20% 100%;
-    --glow-primary: 200 90% 55%;
-    --glow-accent: 260 70% 60%;
+    --glass-bg: 0 0% 13%;
+    --glass-border: 0 0% 24%;
+    --glass-shine: 0 0% 98%;
+    --glow-primary: 0 0% 80%;
+    --glow-accent: 0 0% 40%;
 
-    --sidebar-background: 220 18% 9%;
-    --sidebar-foreground: 220 15% 90%;
-    --sidebar-primary: 200 90% 55%;
-    --sidebar-primary-foreground: 220 20% 7%;
-    --sidebar-accent: 220 15% 16%;
-    --sidebar-accent-foreground: 220 15% 85%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 200 90% 55%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 96%;
+    --sidebar-primary: 0 0% 96%;
+    --sidebar-primary-foreground: 0 0% 8%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 0 0% 96%;
+    --sidebar-border: 0 0% 24%;
+    --sidebar-ring: 0 0% 96%;
+  }
+
+  .light {
+    /* Light mode: white + black */
+    --background: 0 0% 100%;
+    --foreground: 0 0% 7%;
+
+    --card: 0 0% 98%;
+    --card-foreground: 0 0% 7%;
+
+    --popover: 0 0% 98%;
+    --popover-foreground: 0 0% 7%;
+
+    --primary: 0 0% 9%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 0 0% 94%;
+    --secondary-foreground: 0 0% 9%;
+
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 35%;
+
+    --accent: 0 0% 92%;
+    --accent-foreground: 0 0% 9%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 0 0% 12%;
+
+    --glass-bg: 0 0% 97%;
+    --glass-border: 0 0% 86%;
+    --glass-shine: 0 0% 100%;
+    --glow-primary: 0 0% 40%;
+    --glow-accent: 0 0% 12%;
+
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 0 0% 9%;
+    --sidebar-primary: 0 0% 9%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 0 0% 93%;
+    --sidebar-accent-foreground: 0 0% 9%;
+    --sidebar-border: 0 0% 86%;
+    --sidebar-ring: 0 0% 12%;
   }
 }
 
@@ -62,8 +106,8 @@
 
   /* Native selects: avoid white option menus on dark UI (browser support varies). */
   select option {
-    background-color: hsl(220 18% 11%);
-    color: hsl(220 15% 90%);
+    background-color: hsl(var(--card));
+    color: hsl(var(--foreground));
   }
 
   h1, h2, h3, h4, h5, h6 {

@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import {
+  ArrowUpRight,
   BarChart3,
   Check,
   Globe2,
@@ -8,7 +9,6 @@ import {
   Link2,
   Minus,
   Shield,
-  Sparkles,
   Zap,
 } from "lucide-react";
 import { Link } from "react-router-dom";
@@ -21,23 +21,23 @@ import { SAMPLE_PORTFOLIO_SLUG } from "@/lib/portfolio-service";
 const features = [
   {
     icon: LayoutTemplate,
-    title: "Editor-built layouts",
-    body: "Glass, minimal, or bold themes — tuned for readability and first impressions.",
+    title: "Clean layouts, ready to publish",
+    body: "Pick a style, add your work, and publish a link you can confidently share.",
   },
   {
     icon: Link2,
     title: "One stable URL",
-    body: "Share a single link on resumes, LinkedIn, and proposals. Optional custom domain when you are ready.",
+    body: "Use one portfolio link across resumes, LinkedIn, and client proposals.",
   },
   {
     icon: BarChart3,
-    title: "Analytics that matter",
-    body: "See views and project clicks from your dashboard — not splashed on the public page.",
+    title: "Clear performance signals",
+    body: "Track views and project clicks so you can see what gets attention.",
   },
   {
     icon: Shield,
-    title: "Built for real workflows",
-    body: "Update projects anytime, keep one polished public link, and publish quickly when opportunities land.",
+    title: "Simple editing workflow",
+    body: "Update projects in minutes and keep your public page current as your work evolves.",
   },
 ];
 
@@ -45,6 +45,15 @@ const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
 
 const Landing = () => {
   const [livePlans, setLivePlans] = useState<BillingPlans | null>(null);
+  const heroPreviewRef = useRef<HTMLDivElement | null>(null);
+  const reduceMotion = useReducedMotion();
+  const { scrollYProgress } = useScroll({
+    target: heroPreviewRef,
+    offset: ["start 90%", "end start"],
+  });
+  const previewScale = useTransform(scrollYProgress, [0, 1], [0.985, 1]);
+  const previewY = useTransform(scrollYProgress, [0, 1], [20, -8]);
+  const previewOpacity = useTransform(scrollYProgress, [0, 0.35, 1], [0.78, 1, 1]);
 
   useEffect(() => {
     if (!hasApi) return;
@@ -80,25 +89,28 @@ const Landing = () => {
       <SiteHeader />
 
       <main>
-        <section className="relative overflow-hidden px-5 pb-24 pt-16 md:px-10 md:pb-32 md:pt-20">
-          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_90%_60%_at_50%_-10%,hsl(var(--primary)/0.18),transparent_55%),radial-gradient(ellipse_50%_40%_at_100%_0%,hsl(var(--accent)/0.12),transparent_50%)]" />
+        <section className="relative overflow-hidden border-b border-white/10 px-5 pb-20 pt-14 md:px-10 md:pb-24 md:pt-16">
+          <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_65%_45%_at_72%_0%,hsl(var(--primary)/0.16),transparent_60%)]" />
 
           <div className="mx-auto grid max-w-6xl gap-14 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary">
-                <Sparkles className="h-3.5 w-3.5" />
-                Portfolio platform for serious work
+            <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45 }}>
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/5 px-4 py-1.5 text-xs font-medium uppercase tracking-wider text-primary">
+                <span className="h-2 w-2 rounded-full bg-primary" />
+                PortfolioForge
               </div>
-              <h1 className="mt-6 font-display text-4xl font-bold leading-[1.08] tracking-tight md:text-6xl lg:text-[3.5rem]">
-                A portfolio that looks like{" "}
-                <span className="text-gradient">you hired a studio</span> — without the studio bill.
+              <h1 className="mt-6 font-display text-4xl font-bold leading-[1.04] tracking-tight md:text-6xl lg:text-[3.5rem]">
+                More clarity.
+                <br />
+                More trust.
+                <br />
+                <span className="text-primary">More replies.</span>
               </h1>
               <p className="mt-6 max-w-xl text-lg leading-relaxed text-muted-foreground">
-                Turn projects into a polished, public page: bio, case studies, social links, and a print-ready export for
-                recruiters. Built for freelancers, designers, and engineers who need credibility fast.
+                Turn your projects into one clear public page with your story, proof of work, and contact details.
+                Perfect for job applications, referrals, and client outreach.
               </p>
               <p className="mt-4 max-w-xl text-sm text-primary/90">
-                The last portfolio fee you'll ever pay. One-time investment, lifetime professional presence.
+                Start free. Upgrade only when you need more themes, analytics, or custom domain.
               </p>
               <div className="mt-10 flex flex-wrap gap-4">
                 <Link
@@ -110,72 +122,78 @@ const Landing = () => {
                 </Link>
                 <Link
                   to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`}
-                  className="glass-frosted inline-flex items-center gap-2 rounded-full px-8 py-3.5 text-base font-semibold"
+                  className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-transparent px-8 py-3.5 text-base font-semibold text-foreground transition hover:bg-white/5"
                 >
                   View live sample
                 </Link>
               </div>
-              <p className="mt-6 text-sm text-muted-foreground">One-time pricing. No recurring subscription required.</p>
+              <p className="mt-6 text-sm text-muted-foreground">One-time pricing. No subscriptions.</p>
             </motion.div>
 
             <motion.div
+              ref={heroPreviewRef}
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="glass-frosted relative rounded-[1.75rem] p-8 md:p-10"
+              style={
+                reduceMotion
+                  ? undefined
+                  : {
+                      scale: previewScale,
+                      y: previewY,
+                      opacity: previewOpacity,
+                    }
+              }
+              className="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-card shadow-[0_24px_55px_-35px_rgba(0,0,0,0.7)]"
             >
-              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-primary/20 blur-3xl" />
-              <h2 className="font-display text-xl font-semibold">What you ship</h2>
-              <ul className="mt-6 space-y-4 text-sm text-muted-foreground">
-                <li className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <Globe2 className="h-3.5 w-3.5" />
-                  </span>
-                  <span>
-                    <strong className="text-foreground">Public portfolio URL</strong> — clean slug, shareable anywhere.
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <LayoutTemplate className="h-3.5 w-3.5" />
-                  </span>
-                  <span>
-                    <strong className="text-foreground">Project stories</strong> — image, role, outcome, tags, and outbound
-                    links.
-                  </span>
-                </li>
-                <li className="flex gap-3">
-                  <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                    <BarChart3 className="h-3.5 w-3.5" />
-                  </span>
-                  <span>
-                    <strong className="text-foreground">Dashboard analytics</strong> — views and clicks where you actually
-                    look at them.
-                  </span>
-                </li>
-              </ul>
+              <div className="flex items-center justify-between border-b border-white/10 px-5 py-3 text-[0.65rem] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                <span>Live portfolio preview</span>
+                <span>Your own data</span>
+              </div>
+              <div className="grid gap-4 p-5">
+                <div className="rounded-xl border border-white/10 bg-background/65 p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-primary">Profile hero</p>
+                  <p className="mt-2 text-lg font-semibold text-foreground">Name, role, short summary and image above the fold.</p>
+                </div>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {["Case studies with images", "Contact cards with links"].map((label) => (
+                    <div key={label} className="rounded-xl border border-white/10 bg-background/55 p-4">
+                      <p className="text-sm text-foreground">{label}</p>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-white/10"
+                >
+                  Open live sample
+                  <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
             </motion.div>
           </div>
         </section>
 
-        <section className="border-t border-white/10 bg-white/[0.02] px-5 py-20 md:px-10">
+        <section className="border-t border-white/10 px-5 py-20 md:px-10">
           <div className="mx-auto max-w-6xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Why PortfolioForge</p>
-            <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Everything in one coherent flow</h2>
+            <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Built for real hiring and client work</h2>
             <p className="mt-3 max-w-2xl text-muted-foreground">
-              No scattered PDFs and Dribbble links — one narrative, one URL, one place to iterate.
+              Replace scattered links and outdated PDFs with one page that tells a clear story.
             </p>
-            <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid gap-5 md:grid-cols-12">
               {features.map((f, i) => (
                 <motion.div
                   key={f.title}
-                  initial={{ opacity: 0, y: 16 }}
+                  initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.05 }}
-                  className="glass-card rounded-2xl p-6"
+                  className={`rounded-2xl border border-white/10 bg-card p-6 ${
+                    i === 0 ? "md:col-span-6" : i === 1 ? "md:col-span-6" : i === 2 ? "md:col-span-5" : "md:col-span-7"
+                  }`}
                 >
-                  <f.icon className="h-8 w-8 text-primary" />
+                  <f.icon className="h-7 w-7 text-primary" />
                   <h3 className="mt-4 font-display font-semibold">{f.title}</h3>
                   <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{f.body}</p>
                 </motion.div>
@@ -184,10 +202,7 @@ const Landing = () => {
           </div>
         </section>
 
-        <section
-          id="templates"
-          className="scroll-mt-24 border-t border-white/10 bg-white/[0.02] px-5 py-20 md:px-10"
-        >
+        <section id="templates" className="scroll-mt-24 border-t border-white/10 px-5 py-20 md:px-10">
           <div className="mx-auto max-w-6xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Portfolio templates</p>
             <h2 className="mt-3 font-display text-3xl font-bold md:text-4xl">Looks that match your craft</h2>
@@ -195,12 +210,39 @@ const Landing = () => {
               The Free plan ships with the Glass Pro template. Basic and Premium both include the full set below — it is
               bundled with your subscription, not sold separately. Pick any look in the editor once you are subscribed.
             </p>
+            <div className="mt-10 grid gap-5 md:grid-cols-3">
+              {[
+                {
+                  title: "Midnight Gold",
+                  tone: "Dark product-story style with premium contrast.",
+                  panel: "bg-gradient-to-b from-[#171717] to-[#0d0d0d]",
+                },
+                {
+                  title: "Bold Contrast",
+                  tone: "High-impact profile + visual-first project cards.",
+                  panel: "bg-gradient-to-b from-[#111821] to-[#090d14]",
+                },
+                {
+                  title: "Minimal Clean",
+                  tone: "Editorial light layout for straightforward reading.",
+                  panel: "bg-gradient-to-b from-[#f2f2ef] to-[#e8e6de]",
+                },
+              ].map((item) => (
+                <div key={item.title} className="overflow-hidden rounded-2xl border border-white/10 bg-card">
+                  <div className={`h-36 border-b border-white/10 ${item.panel}`} />
+                  <div className="p-5">
+                    <p className="text-base font-semibold text-foreground">{item.title}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">{item.tone}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
             <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {[
                 "Glass Pro — Free plan",
                 "Minimal & Bold — Basic & Premium",
                 "Vintage family — Basic & Premium",
-                "Dark / Dev Mode — Basic & Premium",
+                "Dark Motion — Basic & Premium",
                 "Scroll story — Basic & Premium",
                 "Atrium — Basic & Premium",
                 "Mustard — light editorial",
@@ -209,7 +251,7 @@ const Landing = () => {
               ].map((label) => (
                 <li
                   key={label}
-                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-foreground"
+                  className="flex items-center gap-2 rounded-xl border border-white/10 bg-card px-4 py-3 text-sm text-foreground"
                 >
                   <LayoutTemplate className="h-4 w-4 shrink-0 text-primary" />
                   {label}
@@ -225,7 +267,7 @@ const Landing = () => {
               </a>
               <Link
                 to="/auth"
-                className="glass-frosted inline-flex items-center justify-center rounded-full px-6 py-3 text-sm font-semibold"
+                className="inline-flex items-center justify-center rounded-full border border-white/20 bg-transparent px-6 py-3 text-sm font-semibold transition hover:bg-white/5"
               >
                 Sign in to choose a theme
               </Link>
@@ -235,7 +277,7 @@ const Landing = () => {
 
         <section
           id="pricing"
-          className="scroll-mt-24 border-t border-white/10 bg-white/[0.02] px-5 py-20 md:px-10"
+          className="scroll-mt-24 border-t border-white/10 px-5 py-20 md:px-10"
         >
           <div className="mx-auto max-w-6xl">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Pricing</p>
@@ -247,7 +289,7 @@ const Landing = () => {
             <p className="mt-2 text-sm text-muted-foreground/90">{currencyNote}</p>
 
             <div className="mt-12 grid gap-6 lg:grid-cols-3">
-              <div className="glass-card flex flex-col rounded-2xl p-6 md:p-8">
+              <div className="flex flex-col rounded-2xl border border-white/10 bg-card p-6 md:p-8">
                 <h3 className="font-display text-lg font-semibold">{freeLabel}</h3>
                 <p className="mt-2 text-3xl font-bold text-primary">{freePrice}</p>
                 <p className="mt-2 text-sm text-muted-foreground">{freeTagline}</p>
@@ -273,7 +315,7 @@ const Landing = () => {
                 </Link>
               </div>
 
-              <div className="glass-card flex flex-col rounded-2xl border border-primary/25 bg-primary/[0.06] p-6 md:p-8">
+              <div className="flex flex-col rounded-2xl border border-primary/30 bg-primary/[0.05] p-6 md:p-8">
                 <h3 className="font-display text-lg font-semibold">{basicLabel}</h3>
                 <p className="mt-2 text-3xl font-bold text-primary">{basicPrice}</p>
                 <p className="mt-2 text-sm text-muted-foreground">{basicTagline}</p>
@@ -293,13 +335,13 @@ const Landing = () => {
                 </ul>
                 <Link
                   to="/auth"
-                  className="glass-pill mt-8 block rounded-full py-3 text-center text-sm font-semibold text-primary-foreground"
+                  className="mt-8 block rounded-full border border-primary/60 bg-primary py-3 text-center text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
                 >
                   Get Basic after sign-in
                 </Link>
               </div>
 
-              <div className="glass-card relative flex flex-col rounded-2xl border border-primary/35 p-6 md:p-8">
+              <div className="relative flex flex-col rounded-2xl border border-primary/35 bg-card p-6 md:p-8">
                 <span className="absolute right-4 top-4 rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold text-primary-foreground">
                   {premiumTierCopy.badge ?? "Best value"}
                 </span>
@@ -349,7 +391,7 @@ const Landing = () => {
             </p>
           </div>
 
-          <div className="mx-auto mb-10 max-w-6xl rounded-2xl border border-white/10 bg-white/[0.02] px-6 py-6">
+          <div className="mx-auto mb-10 max-w-6xl rounded-2xl border border-white/10 bg-card px-6 py-6">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-primary">Planned features</p>
             <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
               <li>Static HTML export for full offline hosting</li>
@@ -357,7 +399,7 @@ const Landing = () => {
               <li>Section layout presets for faster page builds</li>
             </ul>
           </div>
-          <div className="mx-auto flex max-w-6xl flex-col items-center rounded-[1.75rem] border border-white/10 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 px-8 py-16 text-center md:px-16">
+          <div className="mx-auto flex max-w-6xl flex-col items-center rounded-[1.75rem] border border-white/10 bg-card px-8 py-16 text-center md:px-16">
             <h2 className="font-display text-3xl font-bold md:text-4xl">Ready when you are</h2>
             <p className="mt-4 max-w-lg text-muted-foreground">
               Create an account, paste your best work, publish — then send one link with your next application or client
@@ -370,7 +412,10 @@ const Landing = () => {
               >
                 Get started
               </Link>
-              <Link to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`} className="glass-frosted rounded-full px-8 py-3 font-semibold">
+              <Link
+                to={`/portfolio/${SAMPLE_PORTFOLIO_SLUG}`}
+                className="rounded-full border border-white/20 bg-transparent px-8 py-3 font-semibold transition hover:bg-white/5"
+              >
                 Preview sample
               </Link>
             </div>

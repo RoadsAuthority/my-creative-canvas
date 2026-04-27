@@ -35,47 +35,47 @@ const Auth = () => {
     <div className="flex min-h-screen flex-col bg-background">
       <SiteHeader />
       <main className="flex flex-1 items-center justify-center px-6 py-16">
-      <form onSubmit={submit} className="glass-frosted w-full max-w-md rounded-3xl p-8 md:p-10">
-        <Link to="/" className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-primary">
-          ← Back to home
-        </Link>
-        <h1 className="mt-4 text-3xl font-bold">{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
-        <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Secure sign-in for your portfolio workspace.</p>
+        <form onSubmit={submit} className="w-full max-w-md rounded-3xl border border-border bg-card p-8 shadow-sm md:p-10">
+          <Link to="/" className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-primary">
+            ← Back to home
+          </Link>
+          <h1 className="mt-4 text-3xl font-bold">{mode === "signup" ? "Create your account" : "Welcome back"}</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">Secure sign-in for your portfolio workspace.</p>
 
-        <div className="mt-6 space-y-3">
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
-            className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary"
-            required
-          />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            minLength={6}
-            className="glass-subtle w-full rounded-xl border border-white/10 bg-transparent p-3 outline-none focus:border-primary"
-            required
-          />
-        </div>
+          <div className="mt-6 space-y-3">
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Email"
+              className="w-full rounded-xl border border-input bg-background p-3 outline-none ring-offset-background focus:border-primary focus:ring-1 focus:ring-ring"
+              required
+            />
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              minLength={6}
+              className="w-full rounded-xl border border-input bg-background p-3 outline-none ring-offset-background focus:border-primary focus:ring-1 focus:ring-ring"
+              required
+            />
+          </div>
 
-        {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+          {error && <p className="mt-3 text-sm text-red-500">{error}</p>}
 
-        <button type="submit" disabled={loading} className="glass-pill mt-6 w-full rounded-full px-6 py-3 font-semibold">
-          {loading ? "Please wait..." : mode === "signup" ? "Create account" : "Login"}
-        </button>
+          <button type="submit" disabled={loading} className="glass-pill mt-6 w-full rounded-full px-6 py-3 font-semibold">
+            {loading ? "Please wait..." : mode === "signup" ? "Create account" : "Login"}
+          </button>
 
-        <button
-          type="button"
-          onClick={() => setMode((prev) => (prev === "signup" ? "login" : "signup"))}
-          className="mt-3 w-full text-sm text-muted-foreground underline underline-offset-4"
-        >
-          {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
-        </button>
-      </form>
+          <button
+            type="button"
+            onClick={() => setMode((prev) => (prev === "signup" ? "login" : "signup"))}
+            className="mt-3 w-full text-sm text-muted-foreground underline underline-offset-4"
+          >
+            {mode === "signup" ? "Already have an account? Sign in" : "New here? Create an account"}
+          </button>
+        </form>
       </main>
       <SiteFooter />
     </div>

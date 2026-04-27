@@ -23,6 +23,7 @@ const N = {
   void: "#0d0d0d",
   card: "#161616",
   gold: "#e3bc49",
+  line: "rgba(255,255,255,0.12)",
 } as const;
 
 function projectImageUrls(project: PortfolioProject): string[] {
@@ -90,6 +91,7 @@ export function PortfolioMidnightGoldTheme({
   const last = nameParts.slice(1).join(" ");
 
   const clientStrip = data.projects.slice(0, 4).map((p) => p.title);
+  const featuredProjects = data.projects.filter((p) => projectImageUrls(p).length > 0).slice(0, 2);
 
   return (
     <div
@@ -119,7 +121,7 @@ export function PortfolioMidnightGoldTheme({
       <main>
         <section className="border-b border-white/5 px-5 py-16 md:px-10 md:py-24">
           <div className="mx-auto grid max-w-6xl gap-12 lg:grid-cols-12 lg:items-center">
-            <motion.div className="lg:col-span-6" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
+            <motion.div className="lg:col-span-5" initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}>
               <p className="text-xs font-semibold uppercase tracking-[0.3em] text-zinc-500">I&apos;m</p>
               <h1 className="mt-2 text-4xl font-bold leading-tight md:text-6xl lg:text-7xl">
                 <span className="border-b-4 pb-1" style={{ borderColor: N.gold }}>
@@ -130,16 +132,23 @@ export function PortfolioMidnightGoldTheme({
               <p className="mt-6 max-w-lg text-sm leading-relaxed text-zinc-400">{data.headline}</p>
               <p className="mt-4 max-w-lg text-sm leading-relaxed text-zinc-500">{aboutTitle}</p>
             </motion.div>
-            <div className="relative flex justify-center lg:col-span-6">
-              <div className="absolute inset-0 -z-10 rounded-full bg-gradient-to-br from-amber-500/10 to-transparent blur-3xl" />
-              <div className="relative w-full max-w-md">
-                <div className="absolute -inset-4 rounded-full border border-white/5" />
+            <div className="relative flex justify-center lg:col-span-7">
+              <div className="absolute inset-0 -z-10 rounded-[2rem] bg-gradient-to-br from-amber-500/10 to-transparent blur-3xl" />
+              <div className="relative w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/10 bg-black">
+                <div className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between border-b border-white/10 bg-black/70 px-4 py-3 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-zinc-500">
+                  <span>Portfolio preview</span>
+                  <span>{data.projects.length} projects</span>
+                </div>
                 {heroImage ? (
-                  <button type="button" onClick={() => setLightbox({ urls: [heroImage], index: 0 })} className="block w-full overflow-hidden rounded-full">
-                    <img src={heroImage} alt="" className="aspect-square w-full object-cover object-top" />
+                  <button
+                    type="button"
+                    onClick={() => setLightbox({ urls: [heroImage], index: 0 })}
+                    className="block w-full overflow-hidden"
+                  >
+                    <img src={heroImage} alt="" className="aspect-[16/10] w-full object-cover object-top pt-11" />
                   </button>
                 ) : (
-                  <div className="flex aspect-square w-full items-center justify-center rounded-full border border-dashed border-white/15 text-sm text-zinc-600">
+                  <div className="flex aspect-[16/10] w-full items-center justify-center border border-dashed border-white/15 pt-11 text-sm text-zinc-600">
                     Add photo
                   </div>
                 )}
@@ -147,6 +156,30 @@ export function PortfolioMidnightGoldTheme({
             </div>
           </div>
         </section>
+
+        {featuredProjects.length > 0 ? (
+          <section className="border-b border-white/5 px-5 py-14 md:px-10 md:py-16" style={{ backgroundColor: N.card }}>
+            <div className="mx-auto max-w-6xl">
+              <p className="text-center text-xs font-semibold uppercase tracking-[0.25em] text-zinc-500">Featured work</p>
+              <div className="mt-8 grid gap-5 md:grid-cols-2">
+                {featuredProjects.map((project) => {
+                  const urls = projectImageUrls(project);
+                  return (
+                    <article key={`featured-${project.id}`} className="overflow-hidden rounded-2xl border border-white/10 bg-[#0f0f10]">
+                      <button type="button" onClick={() => setLightbox({ urls, index: 0 })} className="block w-full overflow-hidden">
+                        <img src={urls[0]} alt="" className="aspect-[16/10] w-full object-cover transition duration-500 hover:scale-[1.02]" />
+                      </button>
+                      <div className="border-t px-5 py-4" style={{ borderColor: N.line }}>
+                        <h3 className="text-lg font-semibold text-white">{project.title}</h3>
+                        <p className="mt-1 line-clamp-2 text-sm text-zinc-400">{project.summary}</p>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         {clientStrip.length > 0 ? (
           <section className="border-b border-white/5 py-10" style={{ backgroundColor: N.card }}>
@@ -293,7 +326,7 @@ export function PortfolioMidnightGoldTheme({
                     <Mail className="h-5 w-5 shrink-0" style={{ color: N.gold }} />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Email</p>
-                      <p className="mt-1 break-all text-sm">{data.email}</p>
+                      <p className="mt-1 break-words text-sm">{data.email}</p>
                     </div>
                   </a>
                 ) : null}
@@ -320,7 +353,7 @@ export function PortfolioMidnightGoldTheme({
                     <Globe className="h-5 w-5 shrink-0 text-zinc-500" />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">Web</p>
-                      <p className="mt-1 break-all text-sm">{social.website}</p>
+                      <p className="mt-1 break-words text-sm">{social.website}</p>
                     </div>
                   </a>
                 ) : null}
@@ -329,7 +362,7 @@ export function PortfolioMidnightGoldTheme({
                     <Linkedin className="h-5 w-5 shrink-0 text-zinc-500" />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">LinkedIn</p>
-                      <p className="mt-1 break-all text-sm">{social.linkedin}</p>
+                      <p className="mt-1 break-words text-sm">{social.linkedin}</p>
                     </div>
                   </a>
                 ) : null}
@@ -338,7 +371,7 @@ export function PortfolioMidnightGoldTheme({
                     <Github className="h-5 w-5 shrink-0 text-zinc-500" />
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">GitHub</p>
-                      <p className="mt-1 break-all text-sm">{social.github}</p>
+                      <p className="mt-1 break-words text-sm">{social.github}</p>
                     </div>
                   </a>
                 ) : null}

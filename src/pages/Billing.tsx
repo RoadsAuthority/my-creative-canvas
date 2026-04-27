@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import { Check, Loader2, Minus, Sparkles } from "lucide-react";
+import { Check, Loader2, Minus } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteHeader } from "@/components/SiteHeader";
 import { useAuth } from "@/contexts/AuthContext";
@@ -148,9 +148,7 @@ const Billing = () => {
       <SiteHeader />
       <main className="container max-w-4xl px-4 py-12 md:py-16">
         <div className="mb-10 flex items-start gap-3">
-          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-5 w-5" />
-          </span>
+          <span className="mt-2 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
           <div>
             <p className="text-xs font-medium uppercase tracking-widest text-primary">Pricing</p>
             <h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">Plans & billing</h1>
@@ -250,7 +248,7 @@ const Billing = () => {
         ) : null}
 
         <div className="grid gap-6 md:grid-cols-2">
-          <div className="glass-frosted rounded-2xl border border-white/10 p-6 md:p-8">
+          <div className="glass-frosted rounded-2xl border border-border p-6 md:p-8">
             <h2 className="font-display text-xl font-semibold">{plans?.basic.label ?? basicTierCopy.label}</h2>
             <p className="mt-1 text-2xl font-bold text-primary">{plans?.basic.priceHint ?? basicTierCopy.priceHint}</p>
             <p className="mt-2 text-sm text-muted-foreground">
@@ -300,7 +298,7 @@ const Billing = () => {
             ) : null}
           </div>
 
-          <div className="glass-frosted relative rounded-2xl border border-primary/30 bg-primary/5 p-6 md:p-8">
+          <div className="glass-frosted relative rounded-2xl border border-border bg-primary/5 p-6 md:p-8">
             <span className="absolute right-4 top-4 rounded-full bg-primary px-2 py-0.5 text-xs font-semibold text-primary-foreground">
               Best value
             </span>
@@ -344,7 +342,7 @@ const Billing = () => {
           </div>
         </div>
 
-        <div className="mt-10 rounded-2xl border border-white/10 bg-muted/20 p-6 text-sm text-muted-foreground">
+        <div className="mt-10 rounded-2xl border border-border bg-muted/30 p-6 text-sm text-muted-foreground">
           <p className="font-medium text-foreground">{plans?.free.label ?? freeTierCopy.label} (freemium mode)</p>
           <p className="mt-2">{plans?.free.tagline ?? freeTierCopy.tagline}</p>
           <ul className="mt-3 space-y-1.5">

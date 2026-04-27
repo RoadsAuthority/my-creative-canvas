@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Copy, Plus, Sparkles, X } from "lucide-react";
+import { ArrowLeft, Copy, Plus, X } from "lucide-react";
 import { Link, useMatch, useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -572,9 +572,7 @@ const PortfolioEditor = ({ userId }: PortfolioEditorProps) => {
           >
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex items-center gap-2">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                  <Sparkles className="h-5 w-5" />
-                </span>
+                <span className="h-3 w-3 rounded-full bg-primary" />
                 <div>
                   <h2 className="text-lg font-semibold">Editor</h2>
                   <p className="text-xs text-muted-foreground">

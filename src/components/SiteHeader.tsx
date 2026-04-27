@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Menu, Sparkles, X } from "lucide-react";
+import { Menu, Moon, Sun, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { SAMPLE_PORTFOLIO_SLUG } from "@/lib/portfolio-service";
 
 const hasApi = Boolean(import.meta.env.VITE_API_BASE_URL?.trim());
@@ -13,6 +14,7 @@ type SiteHeaderProps = {
 
 export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
   const { user } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const { pathname } = useLocation();
   const onDashboard = pathname.startsWith("/app");
   const displayName = user?.fullName?.trim() || user?.email || "Account";
@@ -33,18 +35,16 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
   }, [mobileOpen]);
 
   const navLinkClass =
-    "block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-white/5 hover:text-foreground md:inline-block md:rounded-full md:px-4 md:py-2";
+    "block rounded-lg px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground md:inline-block md:rounded-full md:px-4 md:py-2";
 
   return (
-    <header className="no-print sticky top-0 z-50 border-b border-white/10 bg-background/75 backdrop-blur-xl">
+    <header className="no-print sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-xl">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:h-16 sm:px-5 md:px-8">
         <Link
           to="/"
           className="group flex min-w-0 shrink-0 items-center gap-2 font-display text-base font-bold tracking-tight sm:text-lg"
         >
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary transition-colors group-hover:bg-primary/25 sm:h-9 sm:w-9">
-            <Sparkles className="h-4 w-4" />
-          </span>
+          <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-primary/90 sm:h-3 sm:w-3" />
           <span className="truncate">
             Portfolio<span className="text-primary">Forge</span>
           </span>
@@ -92,10 +92,21 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
             </>
           ) : null}
 
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex h-9 items-center gap-2 rounded-full border border-border bg-card px-3 text-foreground transition hover:bg-accent hover:text-accent-foreground"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span className="text-xs font-medium">{theme === "dark" ? "Dark" : "Light"}</span>
+          </button>
+
           {user ? (
             <Link
               to="/profile"
-              className="ml-1 inline-flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-2 py-1.5 transition-colors hover:bg-white/10"
+              className="ml-1 inline-flex shrink-0 items-center gap-2 rounded-full border border-border bg-card px-2 py-1.5 transition-colors hover:bg-accent hover:text-accent-foreground"
               title="Open profile"
             >
               {user.avatarUrl ? (
@@ -112,10 +123,20 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
 
         {/* Mobile menu */}
         <div className="flex shrink-0 items-center gap-2 md:hidden">
+          <button
+            type="button"
+            onClick={toggleTheme}
+            className="inline-flex h-10 items-center gap-1.5 rounded-xl border border-border bg-card px-2.5 text-foreground transition hover:bg-accent hover:text-accent-foreground"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            <span className="text-[11px] font-medium leading-none">{theme === "dark" ? "Dark" : "Light"}</span>
+          </button>
           {user ? (
             <Link
               to="/profile"
-              className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.02] p-1 transition-colors hover:bg-white/10"
+              className="inline-flex items-center rounded-full border border-border bg-card p-1 transition-colors hover:bg-accent hover:text-accent-foreground"
               title="Profile"
             >
               {user.avatarUrl ? (
@@ -132,7 +153,7 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
             aria-expanded={mobileOpen}
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
             onClick={() => setMobileOpen((o) => !o)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-foreground transition hover:bg-white/10"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card text-foreground transition hover:bg-accent hover:text-accent-foreground"
           >
             {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
@@ -144,10 +165,10 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
           <button
             type="button"
             aria-hidden
-            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            className="fixed inset-0 z-40 bg-black/60 md:hidden"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="fixed inset-x-0 top-14 z-50 max-h-[min(70vh,calc(100dvh-3.5rem))] overflow-y-auto border-b border-white/10 bg-background/95 px-4 py-4 shadow-xl backdrop-blur-xl sm:top-16 sm:max-h-[min(70vh,calc(100dvh-4rem))] md:hidden">
+          <div className="fixed inset-x-0 top-14 z-50 max-h-[min(70vh,calc(100dvh-3.5rem))] overflow-y-auto border-b border-border bg-background/95 px-4 py-4 shadow-xl backdrop-blur-xl sm:top-16 sm:max-h-[min(70vh,calc(100dvh-4rem))] md:hidden">
             <div className="mx-auto flex max-w-6xl flex-col gap-1">
               {!onDashboard ? (
                 <>
@@ -193,7 +214,7 @@ export function SiteHeader({ showDashboard = true }: SiteHeaderProps) {
                 </>
               ) : null}
               {user ? (
-                <div className="mt-2 border-t border-white/10 pt-3">
+                <div className="mt-2 border-t border-border pt-3">
                   <p className="px-3 text-[0.65rem] font-medium uppercase tracking-wider text-muted-foreground">Signed in</p>
                   <p className="truncate px-3 py-1 text-sm text-foreground">{displayName}</p>
                   <Link to="/profile" className={`${navLinkClass} mt-1`} onClick={() => setMobileOpen(false)}>

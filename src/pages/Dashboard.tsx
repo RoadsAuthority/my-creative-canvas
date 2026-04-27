@@ -175,7 +175,7 @@ const Dashboard = () => {
                 </p>
               ) : (
                 myPortfolios.slice(0, 24).map((item) => (
-                  <div key={item.id} className="rounded-xl border border-white/10 bg-transparent p-3">
+                  <div key={item.id} className="rounded-xl border border-border bg-card/40 p-3">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <div className="min-w-0">
                         <p className="font-medium">{item.fullName}</p>
@@ -213,7 +213,7 @@ const Dashboard = () => {
               )}
             </div>
             {billing && !billing.limits.analytics ? (
-              <div className="mt-6 rounded-xl border border-dashed border-white/15 p-4 text-sm text-muted-foreground">
+              <div className="mt-6 rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
                 <p className="text-xs uppercase tracking-wider text-muted-foreground">Analytics</p>
                 <p className="mt-2">Included with Basic and Premium.</p>
                 <Link to="/billing" className="mt-2 inline-block text-xs text-primary hover:underline">
